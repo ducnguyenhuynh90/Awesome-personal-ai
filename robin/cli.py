@@ -83,7 +83,7 @@ def cmd_eval(a):
         print("suites: routing (offline, free) | process (live, costs money)")
         return 2
     cases = yaml.safe_load((ROOT / "evals" / "routing" / f"{a.set}.yaml").read_text())["cases"]
-    router = Router()
+    router = Router(active=None)  # catalogue quality: all departments
     ok_agent = ok_skill = 0
     misses = []
     for c in cases:

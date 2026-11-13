@@ -9,7 +9,14 @@ Last session: 2026-11-13, Claude Code (cloud), branch `claude/robin-v2-agent-spe
 4. Guards work and are tested: approval gate (default deny), untrusted wrapper, secret scanner. 27 tests pass.
 5. Orchestrator (`robin ask`) is written against claude-agent-sdk 0.2.172 but has NOT run live: no Anthropic credentials in the build container.
 
+## Since then (2026-11-13, second pass)
+- David confirmed D-004 to D-006. Active departments = product, market research, data, marketing (D-011, config/org.yaml).
+- Router ranks all departments, then filters; asks for inactive departments go to chief-of-staff flagged `inactive`. 30 tests pass.
+- Live smoke test of the 4 agents: safe and honest, but all broke the 120-word cap; research cited unopened pages.
+  Fixes are proposed, not applied (`.claude/` and `evals/` are David's): docs/proposals/2026-11-13-first-four-departments.md.
+
 ## In progress → next concrete step
+- David approves the proposal → apply items 1–8, rerun the routing evals and the 4-department smoke test.
 - Live P0 acceptance: on the VM with credentials, run `robin ask "<PH KYC question>"`, then `robin eval process`; record cost here.
 - Seed PH knowledge: David gives 5 sourced facts → `robin kb add-source` + `add-fact` for each.
 - Slack DM listener + daemon/scheduler (spec §4 B/C) — not started.
@@ -19,8 +26,8 @@ Last session: 2026-11-13, Claude Code (cloud), branch `claude/robin-v2-agent-spe
 - Anthropic credentials and Slack app tokens on the VM.
 
 ## Open questions for David
-1. Confirm DECISIONS D-004 → D-006 (fact format, supersede-not-delete, edge vocabulary).
-2. Which departments matter first beyond product/research/data? (All 12 exist; tune the top 3 with real asks.)
+1. Metric definitions (FTD, D2 deposit retention, LTV, CAC payback) — data-analyst is blocked without them.
+2. Approve docs/proposals/2026-11-13-first-four-departments.md.
 3. Fill `harness/goals.md` with Q4 goals — mode C (autonomous agenda) depends on it.
 
 ## Do NOT redo

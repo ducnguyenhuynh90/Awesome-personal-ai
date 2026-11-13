@@ -26,18 +26,18 @@ Format: date · decision · why · alternatives rejected · who. Do not re-open 
 ## D-004 · 2026-11-13 · Fact format = spec §15.3, not §5
 - Decision: `- [date] fact — [[src-id]] — A|B|C (flags)`. Expiry is node-level (`expires:` in frontmatter).
 - Why: §5 and §15 conflicted; source ids give traceable, deduplicated sources.
-- Who: Claude (review), pending David's confirmation.
+- Who: Claude (review). Confirmed by David 2026-11-13.
 
 ## D-005 · 2026-11-13 · Superseded facts are marked, never moved or deleted
 - Decision: wrong/old facts get `(superseded by <date>)`; whole nodes move to `_archive/` only when retired.
 - Why: §5 (move to `_archive/`) and §15.6 (never delete) conflicted; `kb stale` and the brief need to see history.
-- Who: Claude, pending David.
+- Who: Claude. Confirmed by David 2026-11-13.
 
 ## D-006 · 2026-11-13 · Edge vocabulary amended
 - Decision: `causes` folded into `impacts` (note `causal`); `decided_by` dropped (no person nodes); added `targets`, `part_of`.
   `goal` and `decision` are not node types — goals live in `harness/goals.md`, decisions here.
 - Why: avoid overlapping edges and notes about people.
-- Who: Claude, pending David.
+- Who: Claude. Confirmed by David 2026-11-13.
 
 ## D-007 · 2026-11-13 · Generated files are committed
 - Decision: `knowledge/*/_index.md`, `knowledge/graph.json`, `org/REGISTRY.md` are generated and committed; the
@@ -61,3 +61,11 @@ Format: date · decision · why · alternatives rejected · who. Do not re-open 
   requester, nothing goes to the shared knowledge base, and people-partner never touches HR records.
 - Why: S5 never-expose rules (HR/legal records, payout formulas, non-public financials, confidential contracts).
 - Who: Claude.
+
+## D-011 · 2026-11-13 · Start with four departments
+- Decision: product, market research, data and marketing are active first (`config/org.yaml`). The other eight
+  agents stay in the repo but the router does not send work to them; asks for them go to the chief of staff,
+  which says the department is not active yet and handles what it can with research-brief.
+- Why: tune a few departments on real asks before widening; routing among 4 is easier to get right.
+- Rejected: deleting the other agents (they cost nothing while inactive and keep the catalogue complete).
+- Who: David.
