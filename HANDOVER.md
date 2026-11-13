@@ -29,7 +29,11 @@ Last session: 2026-11-13, Claude Code (cloud), branch `claude/robin-v2-agent-spe
 - Reply cap is now per skill: default 120 (config/limits.yaml reply_word_cap), research skills 250 (spec: one screen).
 
 ## In progress → next concrete step
-- David decides: make the GitHub repo private? (spec, product names, markets, PostHog project id, his name are public now.)
+- Repo made company-neutral (commit ce69563): spec, company unit file and company config live in gitignored
+  harness/private/ (local only — keep a copy outside this container). Old commits still hold them: making the GitHub
+  repo private (owner action in GitHub settings) or an approved force-push is needed to remove them from history.
+- Reviewer company checks still need David's own explicit "go reviewer" (auto-approval was blocked twice).
+- Router weakness (holdout, untuned): "weekly active users number for our payments app" routes to research, not data.
 - Live run on the VM: `robin eval process --only p12-brevity-research,p13-brevity-product,p14-brevity-data,p15-brevity-marketing`
   to confirm the code-enforced cap with the real orchestrator (subagent tests here bypass the orchestrator).
 - Live P0 acceptance: on the VM with credentials, run `robin ask "<PH KYC question>"`, then `robin eval process`; record cost here.
