@@ -15,8 +15,16 @@ Last session: 2026-11-13, Claude Code (cloud), branch `claude/robin-v2-agent-spe
 - Live smoke test of the 4 agents: safe and honest, but all broke the 120-word cap; research cited unopened pages.
   Fixes are proposed, not applied (`.claude/` and `evals/` are David's): docs/proposals/2026-11-13-first-four-departments.md.
 
+- David approved ("fix all"): proposal items 1–8 applied. Routing: focus 10/10, cases 53/54, holdout 17/18 (holdout never tuned).
+- Re-test after fixes: data-analyst now ~125 words with ONE definition question (was ~250); research opens sources and stops
+  when it can't (was citing snippets); marketing marks conditional variants. But research (~200), product (~280) and marketing
+  (~250) still exceeded 120 words → the cap is now enforced in code: `robin/orchestrator.py:enforce_cap` saves the full answer
+  to outbox/<task>-full.md, shortens once with the cheap model, and falls back to a deterministic trim. 33 tests pass.
+- Network policy of the cloud session blocked gmanetwork.com and philstar.com; research needs bsp.gov.ph, pagcor.ph, inquirer.net.
+
 ## In progress → next concrete step
-- David approves the proposal → apply items 1–8, rerun the routing evals and the 4-department smoke test.
+- Live run on the VM: `robin eval process --only p12-brevity-research,p13-brevity-product,p14-brevity-data,p15-brevity-marketing`
+  to confirm the code-enforced cap with the real orchestrator (subagent tests here bypass the orchestrator).
 - Live P0 acceptance: on the VM with credentials, run `robin ask "<PH KYC question>"`, then `robin eval process`; record cost here.
 - Seed PH knowledge: David gives 5 sourced facts → `robin kb add-source` + `add-fact` for each.
 - Slack DM listener + daemon/scheduler (spec §4 B/C) — not started.

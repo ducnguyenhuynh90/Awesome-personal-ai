@@ -31,6 +31,70 @@ def _config(name: str) -> dict:
     return yaml.safe_load((ROOT / "config" / name).read_text(encoding="utf-8")) or {}
 
 
+WORD_CAP = 120
+OUTBOX = ROOT / "outbox"
+
+
+def _words(text: str) -> int:
+    return len(re.findall(r"\S+", text))
+
+
+def _hard_trim(text: str, link: str, cap: int = WORD_CAP) -> str:
+    """Deterministic fallback: keep whole lines from the top until the cap, then link the full answer."""
+    budget = cap - _words(link) - 1
+    kept, used = [], 0
+    for line in text.splitlines():
+        n = _words(line)
+        if used + n > budget:
+            break
+        kept.append(line)
+        used += n
+    if not kept:  # first line alone is too long: cut it by words
+        kept = [" ".join(text.split()[:budget])]
+    return "\n".join(kept).rstrip() + "\n" + link
+
+
+async def enforce_cap(output: str, task_id: str, shorten=None, cap: int = WORD_CAP) -> tuple[str, dict]:
+    """Spec §6 'revise <= 1' for brevity: save the full answer to outbox/, then shorten once.
+
+    Prompt rules alone did not hold the cap in the 2026-11-13 smoke test (3 of 4 agents over), so the
+    cap is enforced in code. `shorten` is an async fn(text, cap, link) -> str (a cheap-model rewrite);
+    if it is missing, fails, or is still over the cap, a deterministic trim guarantees the cap.
+    """
+    if _words(output) <= cap:
+        return output, {"capped": False}
+    OUTBOX.mkdir(exist_ok=True)
+    full = OUTBOX / f"{task_id}-full.md"
+    full.write_text(output, encoding="utf-8")
+    link = f"Full answer: outbox/{full.name}"
+    short, how = None, "trim"
+    if shorten is not None:
+        try:
+            short = await shorten(output, cap, link)
+            how = "rewrite"
+        except Exception:  # noqa: BLE001 - any failure falls back to the deterministic trim
+            short = None
+    if not short or _words(short) > cap or link not in short:
+        short, how = _hard_trim(short or output, link, cap), "trim"
+    return short, {"capped": True, "method": how, "full": str(full.relative_to(ROOT)),
+                   "words_before": _words(output), "words_after": _words(short)}
+
+
+async def _cheap_shorten(text: str, cap: int, link: str) -> str:
+    from claude_agent_sdk import ClaudeAgentOptions, ResultMessage, query
+    models = _config("models.yaml")
+    prompt = (f"Rewrite the answer below to at most {cap - 15} words. Keep line 1 (the answer or decision), "
+              f"keep only the evidence that supports it (number + source) and any question for David. "
+              f"Drop tables, caveats and detail. End with this exact line: {link}\n\n<answer>\n{text}\n</answer>")
+    out = ""
+    opts = ClaudeAgentOptions(model=models["tiers"]["cheap"], allowed_tools=[], max_turns=1,
+                              system_prompt="You shorten text. Output only the rewritten answer.")
+    async for m in query(prompt=prompt, options=opts):
+        if isinstance(m, ResultMessage):
+            out = m.result or ""
+    return out.strip()
+
+
 def system_prompt() -> str:
     core = (ROOT / "harness" / "context" / "core.md").read_text(encoding="utf-8")
     contract = (
@@ -126,11 +190,12 @@ async def run(request: str, task_id: str | None = None) -> dict:
             usage = message.usage or {}
 
     output, out_hits = secret_scanner.redact(output)
-    words = len(re.findall(r"\S+", output))
+    output, cap_info = await enforce_cap(output, task_id, shorten=_cheap_shorten)
+    words = _words(output)
     cache_read = int(usage.get("cache_read_input_tokens") or 0)
     total_in = cache_read + int(usage.get("input_tokens") or 0) + int(usage.get("cache_creation_input_tokens") or 0)
     trace.log(task_id, "result", output=output, words=words, cost_usd=cost, usage=usage,
-              cache_hit=round(cache_read / total_in, 3) if total_in else None, tools=tools_used,
+              cache_hit=round(cache_read / total_in, 3) if total_in else None, tools=tools_used, cap=cap_info,
               secrets_in_tools=[k for _, k in findings], secrets_in_output=[h.kind for h in out_hits])
     return {"task": task_id, "output": output, "cost_usd": cost, "words": words, "tools": tools_used,
             "route": route_meta, "secret_findings": findings + [("output", h.kind) for h in out_hits]}
