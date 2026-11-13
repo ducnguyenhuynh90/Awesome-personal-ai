@@ -28,7 +28,12 @@ Last session: 2026-11-13, Claude Code (cloud), branch `claude/robin-v2-agent-spe
   runtime from those skills (or gitignored harness/private/ on the VM). Reviewer changes: docs/proposals/2026-11-13-reviewer-company-checks.md.
 - Reply cap is now per skill: default 120 (config/limits.yaml reply_word_cap), research skills 250 (spec: one screen).
 
+- Optional tools/keys (fourth pass): config/integrations.yaml — everything OFF; keys only from env/.env (gitignored);
+  `robin doctor`, `robin tools list|enable|disable`, `robin ask --dry-run`. Company context is OFF (David: test first,
+  don't touch company info/keys yet). 39 tests pass.
+
 ## In progress → next concrete step
+- David tests: `robin doctor` → set ANTHROPIC_API_KEY in .env → `robin ask "..."` on 4 active departments.
 - Repo made company-neutral (commit ce69563): spec, company unit file and company config live in gitignored
   harness/private/ (local only — keep a copy outside this container). Old commits still hold them: making the GitHub
   repo private (owner action in GitHub settings) or an approved force-push is needed to remove them from history.

@@ -111,7 +111,8 @@ def system_prompt() -> str:
     )
     # Company context stays out of the public repo: on the VM, put a local copy (e.g. exported from the
     # company-context / team-context skills) in harness/private/*.md — gitignored, loaded here if present.
-    private = sorted((ROOT / "harness" / "private").glob("*.md"))
+    from robin import integrations
+    private = sorted((ROOT / "harness" / "private").glob("*.md")) if integrations.company_context_enabled() else []
     company = "\n\n".join(f.read_text(encoding="utf-8") for f in private)
     parts = [untrusted.SYSTEM_RULE, contract, roles, core] + ([company] if company else [])
     return "\n\n".join(parts)
@@ -158,6 +159,8 @@ async def run(request: str, task_id: str | None = None) -> dict:
     from claude_agent_sdk import (AssistantMessage, ClaudeAgentOptions, HookMatcher, ResultMessage,
                                   ToolUseBlock, query)
 
+    from robin import integrations
+    integrations.load_env_file()
     task_id = task_id or trace.new_task_id()
     limits = _config("limits.yaml")
     models = _config("models.yaml")
@@ -166,14 +169,15 @@ async def run(request: str, task_id: str | None = None) -> dict:
 
     router = Router()
     prompt, route_meta = build_prompt(request, router)
-    trace.log(task_id, "intake", request=request, route=route_meta)
+    trace.log(task_id, "intake", request=request, route=route_meta,
+              tools=sorted(integrations.mcp_servers()))
 
     findings: list = []
     options = ClaudeAgentOptions(
         system_prompt=system_prompt(),
         model=models["tiers"]["executor"],
         setting_sources=["project"],
-        mcp_servers={"kb": build_kb_server()},
+        mcp_servers={"kb": build_kb_server(), **integrations.mcp_servers()},
         cwd=str(ROOT),
         max_budget_usd=float(limits["per_task_usd"]),
         max_turns=int(limits.get("max_turns", 30)),

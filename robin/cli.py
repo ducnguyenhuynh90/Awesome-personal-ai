@@ -5,7 +5,9 @@
   robin validate                   check agent/skill files
   robin registry                   regenerate org/REGISTRY.md (compact catalogue)
   robin eval routing               routing accuracy on evals/routing/cases.yaml (free, offline)
-  robin ask "<request>"            run a task (needs Anthropic credentials)
+  robin ask "<request>"            run a task (needs Anthropic credentials); --dry-run needs none
+  robin doctor                     what works now, what is missing (never prints keys)
+  robin tools list|enable|disable NAME   optional tools/keys in config/integrations.yaml
   robin trace <task-id>            show a task's trace
   robin kb lint|index|stale        knowledge checks / regenerate indexes / list stale nodes
   robin kb query [--near ID] [--hops N] [--market X] [--type T] [--text "..."]
@@ -123,11 +125,59 @@ def _eval_process(a):
 
 
 def cmd_ask(a):
+    from robin import integrations
+    integrations.load_env_file()
+    if a.dry_run:
+        from robin.orchestrator import build_prompt, system_prompt
+        from robin.router import Router
+        prompt, meta = build_prompt(a.request, Router())
+        print(f"route: {meta['agent']} · skills {meta['skills'][:3]} · knowledge {meta['kb']}")
+        print(f"tools loaded: kb + {sorted(integrations.mcp_servers()) or 'none'}")
+        print(f"system prompt: {len(system_prompt().split())} words (cached prefix)\n")
+        print(prompt)
+        print("\n[dry run: no model call, no cost]")
+        return 0
+    if not integrations.model_status().ready:
+        print("No model access yet. Set ANTHROPIC_API_KEY in .env (copy .env.example) or run `claude` once to log in.\n"
+              "Try `robin ask --dry-run \"...\"` to see routing without a key. Full check: `robin doctor`.")
+        return 2
     from robin.orchestrator import run_sync
     res = run_sync(a.request)
     print(res["output"])
     print(f"\n[{res['task']} · ${res.get('cost_usd', 0):.4f} · {res.get('words', 0)} words · route {res.get('route', {}).get('agent')}]",
           file=sys.stderr)
+
+
+def cmd_doctor(a):
+    """What works now, what is missing. Never prints key values."""
+    from robin import integrations
+    from robin.kb import lint
+    from robin.registry import validate
+    loaded = integrations.load_env_file()
+    print(f".env: {'loaded ' + ', '.join(loaded) if loaded else ('present' if integrations.ENV_FILE.exists() else 'none (optional; copy .env.example)')}")
+    for st in integrations.statuses():
+        print("  " + st.line())
+    reg, kb = validate(), lint.lint()
+    print(f"registry: {'OK' if not reg else f'{len(reg)} problem(s)'} · knowledge: {'OK' if not kb else f'{len(kb)} problem(s)'}")
+    ready = integrations.model_status().ready
+    print("\nWorks now (no keys): robin route · robin eval routing · robin kb ... · robin ask --dry-run · pytest")
+    print("Live answers: " + ("ready — try robin ask \"...\"" if ready else "need model access (see above)"))
+    print("Add a tool later: put its keys in .env, then `robin tools enable <name>`.")
+    return 0
+
+
+def cmd_tools(a):
+    from robin import integrations
+    integrations.load_env_file()
+    if a.action == "list":
+        for st in integrations.statuses():
+            print(st.line())
+        return 0
+    print(integrations.set_enabled(a.name, a.action == "enable"))
+    st = next((x for x in integrations.statuses() if x.name == a.name), None)
+    if st and a.action == "enable" and st.missing:
+        print(f"note: still missing {', '.join(st.missing)} — add to .env; until then this tool is skipped")
+    return 0
 
 
 def cmd_trace(a):
@@ -180,7 +230,12 @@ def main(argv=None) -> int:
     s.add_argument("--set", default="cases", help="cases (tuning set) or holdout")
     s.add_argument("--only", help="process eval ids, comma-separated")
     s.set_defaults(fn=cmd_eval)
-    s = sub.add_parser("ask"); s.add_argument("request"); s.set_defaults(fn=cmd_ask)
+    s = sub.add_parser("ask"); s.add_argument("request"); s.add_argument("--dry-run", action="store_true",
+        help="show routing, tools and prompt without calling the model"); s.set_defaults(fn=cmd_ask)
+    sub.add_parser("doctor", help="what works now and what is missing").set_defaults(fn=cmd_doctor)
+    s = sub.add_parser("tools", help="list / enable / disable optional tools")
+    s.add_argument("action", choices=["list", "enable", "disable"]); s.add_argument("name", nargs="?")
+    s.set_defaults(fn=cmd_tools)
     s = sub.add_parser("trace"); s.add_argument("task_id"); s.set_defaults(fn=cmd_trace)
 
     kb = sub.add_parser("kb"); kb.set_defaults(fn=cmd_kb)

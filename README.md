@@ -43,6 +43,31 @@ Install the pre-commit hook: `ln -s ../../scripts/pre-commit .git/hooks/pre-comm
 
 Interactive use: open the repo in Claude Code — the same agents and skills load from `.claude/`.
 
+## Test it first (no company data, no tool keys)
+
+```bash
+pip install -e '.[dev]'
+robin doctor                                   # what works now, what is missing (never prints keys)
+robin ask --dry-run "Why did FTD drop in Mexico?"   # routing + prompt, no model call, no cost
+robin eval routing && python -m pytest -q      # offline checks
+cp .env.example .env                           # then set only ANTHROPIC_API_KEY (or run `claude` to log in)
+robin ask "Write 5 push variants to win back lapsed depositors"   # first live answer
+```
+
+Without tools or company context, agents still work: they answer from the web and the knowledge base, and say
+"no access" instead of guessing when a task needs data they cannot reach.
+
+## Add keys or tools later
+
+1. Put the keys in `.env` (gitignored). Variable names are in `.env.example`.
+2. `robin tools enable posthog` (or notion, gmail, calendar, bigquery, github). A tool loads only when it is
+   enabled **and** its keys are set; otherwise it is skipped.
+3. `robin doctor` to confirm it shows `ready`.
+4. New tool: copy a block in `config/integrations.yaml` (http `url` or stdio `command`), write keys as `${VAR}`.
+5. Company context: drop `.md` files in `harness/private/` (gitignored), then `robin tools enable company_context`.
+
+Write tools stay blocked by the approval gate even when a tool is enabled.
+
 ## Add to the org
 
 - New skill: copy a `SKILL.md`, keep "Use when ..." in `description`, add ≥ 2 examples, list it in an agent.
