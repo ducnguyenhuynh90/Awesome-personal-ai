@@ -34,6 +34,7 @@ Pulls a metric with a templated query; returns the number + query link. Aggregat
 3. Return aggregates only — never user-level rows or personal data.
 4. Give the number, the comparison (vs previous period / target), and the query link.
 5. If the number looks wrong (>3σ move), say so and check tracking before reporting.
+6. PostHog: EU instance, project 143966 (spec §12). If the metric has no definition in knowledge/metrics/, ask David ONE question proposing the most likely definition; do not list every variant.
 
 ## Output
 
@@ -50,3 +51,4 @@ Line 1: `<metric> = <value> (<change> vs <period>)`. Then definition, segment, d
 ## Pitfalls (learned)
 
 - Comparing periods with different lengths or a tracking change in between.
+- Answering 'no access' with a long essay; the reply should be 3 lines: no number, why, the one thing needed (learned 2026-11-13 smoke test).

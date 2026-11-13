@@ -41,3 +41,4 @@ Table: variant | text | idea tested | chars. Then 'Test first: A vs C, metric: <
 ## Pitfalls (learned)
 
 - Variants that differ in five ways at once — the test teaches nothing.
+- Writing offer-dependent variants (bonus, expiry) without a confirmed offer — ask for offer, brand, payment method and character limits first, or mark those variants conditional (learned 2026-11-13 smoke test).
