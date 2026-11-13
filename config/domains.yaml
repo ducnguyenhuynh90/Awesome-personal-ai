@@ -1,0 +1,6 @@
+# Web allowlist per skill (spec §11). Anything else needs David's OK. Fill with real hostnames per market.
+default: []
+market-scan: []
+competitor-teardown: []
+voice-of-customer: [apps.apple.com, play.google.com, reddit.com]
+compliance-check: []

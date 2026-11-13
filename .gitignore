@@ -1,0 +1,10 @@
+__pycache__/
+*.pyc
+.pytest_cache/
+*.egg-info/
+traces/
+approvals/
+work/
+outbox/
+knowledge/.write.lock
+.env

@@ -1,0 +1,20 @@
+# Held-out routing cases: never used to tune descriptions or synonyms. Report this number separately.
+cases:
+  - {request: "Put together a memo on whether to raise prices for the CRM", agent: exec-strategy, skill: decision-memo}
+  - {request: "Summarise the week for the CEO in five bullets", agent: exec-strategy, skill: exec-brief}
+  - {request: "Write user stories and acceptance criteria for the new KYC upload screen", agent: product-lead, skill: prd-draft}
+  - {request: "Rank the roadmap themes for next quarter", agent: product-lead, skill: prioritize-backlog}
+  - {request: "Brief for a referral campaign in Bangladesh with a budget split", agent: marketing-lead, skill: campaign-brief}
+  - {request: "Write three ad texts for Google search about fast withdrawals", agent: marketing-lead, skill: copy-variants}
+  - {request: "Snapshot of the payments landscape in the Philippines", agent: research-lead, skill: market-scan}
+  - {request: "Analyse the promotions page of our biggest competitor", agent: research-lead, skill: competitor-teardown}
+  - {request: "What is the weekly active users number for TinderPay?", agent: data-analyst, skill: metric-pull}
+  - {request: "Why did churn spike in September?", agent: data-analyst, skill: metric-diagnosis}
+  - {request: "Background check on a potential affiliate partner before we sign", agent: sales-bd-lead, skill: account-research}
+  - {request: "Group these complaint emails into themes and flag urgent ones", agent: support-lead, skill: ticket-triage}
+  - {request: "Recap the decisions from this long Slack discussion", agent: ops-lead, skill: meeting-actions}
+  - {request: "Review the proposed database schema change for risks", agent: eng-lead, skill: tech-spec-review}
+  - {request: "Why are cloud costs above plan this month?", agent: finance-analyst, skill: budget-variance}
+  - {request: "Design a take-home exercise for a growth marketer", agent: people-partner, skill: interview-plan}
+  - {request: "Check if our responsible gaming messaging meets the regulator's rules", agent: compliance-officer, skill: compliance-check}
+  - {request: "What are the termination terms in the KYC vendor contract?", agent: compliance-officer, skill: policy-summary}

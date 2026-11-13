@@ -1,0 +1,6 @@
+# Model tiers (spec §3). Agent files use aliases (sonnet/opus/haiku/inherit); this maps tiers for direct calls.
+tiers:
+  executor: claude-sonnet-5-5   # chief of staff + department agents
+  reviewer: claude-sonnet-5-5   # different prompt, fresh context
+  cheap: claude-haiku-5-5       # summaries, extraction, reflector
+  deep: claude-opus-5-5         # exec-strategy, weekly retro

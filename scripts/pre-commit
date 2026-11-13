@@ -1,0 +1,10 @@
+#!/usr/bin/env bash
+# Regenerate indexes, then lint knowledge and validate the org. Blocks the commit on failure.
+set -e
+cd "$(git rev-parse --show-toplevel)"
+python3 -m robin kb index >/dev/null
+python3 -m robin registry >/dev/null
+git add knowledge/graph.json knowledge/*/_index.md org/REGISTRY.md 2>/dev/null || true
+python3 -m robin kb lint
+python3 -m robin validate
+python3 -m robin eval routing >/dev/null || { echo "routing eval below threshold — run: robin eval routing"; exit 1; }

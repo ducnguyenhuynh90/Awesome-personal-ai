@@ -1,0 +1,55 @@
+{
+ "nodes": [
+  {
+   "id": "market-bd",
+   "type": "market",
+   "status": "active",
+   "markets": [
+    "bd"
+   ],
+   "updated": "2026-11-13",
+   "summary": "Bangladesh market: regulation, payments, players, trends. Seed node — no verified facts yet."
+  },
+  {
+   "id": "market-mx",
+   "type": "market",
+   "status": "active",
+   "markets": [
+    "mx"
+   ],
+   "updated": "2026-11-13",
+   "summary": "Mexico market: regulation, payments, players, trends. Seed node — no verified facts yet."
+  },
+  {
+   "id": "market-ph",
+   "type": "market",
+   "status": "active",
+   "markets": [
+    "ph"
+   ],
+   "updated": "2026-11-13",
+   "summary": "Philippines market: regulation, payments, players, trends. Seed node — no verified facts yet."
+  },
+  {
+   "id": "market-pk",
+   "type": "market",
+   "status": "active",
+   "markets": [
+    "pk"
+   ],
+   "updated": "2026-11-13",
+   "summary": "Pakistan market: regulation, payments, players, trends. Seed node — no verified facts yet."
+  },
+  {
+   "id": "market-th",
+   "type": "market",
+   "status": "active",
+   "markets": [
+    "th"
+   ],
+   "updated": "2026-11-13",
+   "summary": "Thailand market: regulation, payments, players, trends. Seed node — no verified facts yet."
+  }
+ ],
+ "edges": []
+}

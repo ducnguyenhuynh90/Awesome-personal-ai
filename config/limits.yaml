@@ -1,0 +1,10 @@
+# Hard caps (spec §7). The daemon reads spend from traces/; hitting daily_usd pauses autonomous work.
+daily_usd: 15
+per_task_usd: 1.50
+per_task_tokens: 400000
+max_turns: 30
+autonomous_tasks_per_day: 5
+security:
+  # Command run (with JSON on stdin: kind, location, author) when the secret scanner finds a secret.
+  # Set by the operator to S5's Security/IT reporting process. Empty = only tell David.
+  report_command: ""

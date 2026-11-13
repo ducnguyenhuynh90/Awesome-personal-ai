@@ -1,0 +1,17 @@
+# Node type -> domain folder under knowledge/. Closed set: add a type via PR (David).
+# `goal` and `decision` are not node types: goals live in harness/goals.md, decisions in DECISIONS.md.
+types:
+  market: markets
+  regulator: regulators
+  payment-method: payment-methods
+  competitor: competitors
+  player-pain: players
+  segment: players
+  product: products
+  metric: metrics
+  experiment: experiments
+  channel: channels
+  partner: partners
+  vendor: vendors
+  topic: topics
+  source: _sources

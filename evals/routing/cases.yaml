@@ -1,0 +1,69 @@
+# Routing eval (offline, free). David commits this file; agents may only propose additions in PRs.
+# Requests are phrased differently from the agents' own `examples` so the eval measures generalisation.
+cases:
+  # executive
+  - {request: "We have budget for one new country next year — which one and why?", agent: exec-strategy, skill: decision-memo}
+  - {request: "Are we on track for this quarter's targets?", agent: exec-strategy, skill: okr-review}
+  - {request: "Draft the quarterly letter to our investors", agent: exec-strategy, skill: exec-brief}
+  - {request: "Help me set objectives and key results for 2027 H1", agent: exec-strategy, skill: okr-review}
+  - {request: "Should we shut down the TinderPay side project or keep funding it?", agent: exec-strategy, skill: decision-memo}
+  # product
+  - {request: "Users say signup is too long; how would we test a shorter flow?", agent: product-lead, skill: idea-to-hypothesis}
+  - {request: "Write the requirements doc for a referral feature", agent: product-lead, skill: prd-draft}
+  - {request: "Which of these 15 feature requests should we build first?", agent: product-lead, skill: prioritize-backlog}
+  - {request: "Spec out a loyalty points feature for the CRM product", agent: product-lead, skill: prd-draft}
+  - {request: "Turn the cashback idea into an experiment with a clear decision rule", agent: product-lead, skill: idea-to-hypothesis}
+  # marketing
+  - {request: "Plan a promotion for Lunar New Year to drive deposits", agent: marketing-lead, skill: campaign-brief}
+  - {request: "Give me six subject lines for the win-back email", agent: marketing-lead, skill: copy-variants}
+  - {request: "We need a TikTok and Facebook posting plan for next month", agent: marketing-lead, skill: content-calendar}
+  - {request: "Write headline options for the CRM landing page", agent: marketing-lead, skill: copy-variants}
+  - {request: "Go-to-market plan for launching the CRM to agencies", agent: marketing-lead, skill: campaign-brief}
+  # market research
+  - {request: "What does the online gaming license landscape look like in Thailand?", agent: research-lead, skill: market-scan}
+  - {request: "How do our rivals structure their VIP programs?", agent: research-lead, skill: competitor-teardown}
+  - {request: "Summarise what players hate about withdrawal times from app store reviews", agent: research-lead, skill: voice-of-customer}
+  - {request: "Which e-wallets are most popular in Pakistan?", agent: research-lead, skill: market-scan}
+  - {request: "Benchmark the onboarding flow of the top 3 competitors in Mexico", agent: research-lead, skill: competitor-teardown}
+  - {request: "Customer feedback on social media about our app this month", agent: research-lead, skill: voice-of-customer}
+  # data
+  - {request: "How many first-time depositors did we have last week in PH?", agent: data-analyst, skill: metric-pull}
+  - {request: "Deposits fell sharply on Tuesday, what happened?", agent: data-analyst, skill: metric-diagnosis}
+  - {request: "Did variant B of the onboarding test beat control?", agent: data-analyst, skill: experiment-readout}
+  - {request: "Show the 30-day retention cohort for October signups", agent: data-analyst, skill: metric-pull}
+  - {request: "Root cause the conversion anomaly from yesterday", agent: data-analyst, skill: metric-diagnosis}
+  # sales / bd
+  - {request: "Who is this payment gateway company and are they a good partner for us?", agent: sales-bd-lead, skill: account-research}
+  - {request: "Prepare a proposal for a white-label CRM deal", agent: sales-bd-lead, skill: pitch-draft}
+  - {request: "Find background on these prospects before outreach", agent: sales-bd-lead, skill: account-research}
+  - {request: "Outline a sales deck for affiliate partners", agent: sales-bd-lead, skill: pitch-draft}
+  # support
+  - {request: "Sort this week's support tickets by urgency and category", agent: support-lead, skill: ticket-triage}
+  - {request: "Write a help center article about failed deposits", agent: support-lead, skill: help-article}
+  - {request: "Create a canned reply for KYC document rejection", agent: support-lead, skill: help-article}
+  - {request: "What are customers escalating most in support chats?", agent: support-lead, skill: ticket-triage}
+  # operations
+  - {request: "Document our month-end reconciliation procedure", agent: ops-lead, skill: sop-writer}
+  - {request: "Which help desk software should we buy, Zendesk or Freshdesk?", agent: ops-lead, skill: vendor-compare}
+  - {request: "Pull the action items and owners out of this meeting transcript", agent: ops-lead, skill: meeting-actions}
+  - {request: "Create a checklist for onboarding a new payment vendor", agent: ops-lead, skill: sop-writer}
+  # engineering
+  - {request: "Look at this system design for the wallet service and flag risks", agent: eng-lead, skill: tech-spec-review}
+  - {request: "Write the post-mortem for last night's login outage", agent: eng-lead, skill: incident-postmortem}
+  - {request: "Will this API architecture scale to ten times the load?", agent: eng-lead, skill: tech-spec-review}
+  # finance
+  - {request: "Explain why we overspent the Q3 budget", agent: finance-analyst, skill: budget-variance}
+  - {request: "What is our customer acquisition cost payback by channel?", agent: finance-analyst, skill: unit-economics}
+  - {request: "Compare forecast to actual expenses by department", agent: finance-analyst, skill: budget-variance}
+  - {request: "Is the CRM business profitable per customer — LTV vs CAC?", agent: finance-analyst, skill: unit-economics}
+  # people
+  - {request: "Write a job post for a senior backend engineer", agent: people-partner, skill: job-description}
+  - {request: "What questions should we ask product manager candidates?", agent: people-partner, skill: interview-plan}
+  - {request: "Plan the first 90 days for our new marketing hire", agent: people-partner, skill: onboarding-plan}
+  - {request: "Create a hiring scorecard for a data analyst role", agent: people-partner, skill: job-description}
+  # legal / compliance
+  - {request: "Are we allowed to advertise this bonus on Facebook in the Philippines?", agent: compliance-officer, skill: compliance-check}
+  - {request: "What AML checks are required for deposits in Mexico?", agent: compliance-officer, skill: compliance-check}
+  - {request: "Summarise the key obligations in this payment provider agreement", agent: compliance-officer, skill: policy-summary}
+  - {request: "Does our data retention break data protection law in Thailand?", agent: compliance-officer, skill: compliance-check}
+  - {request: "Give me the risky clauses in this NDA", agent: compliance-officer, skill: policy-summary}
