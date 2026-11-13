@@ -9,3 +9,4 @@ outbox/
 knowledge/.write.lock
 .env
 harness/private/
+feedback/

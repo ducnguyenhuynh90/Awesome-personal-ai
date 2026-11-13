@@ -41,3 +41,21 @@ UNVERIFIED: the ACE paper authors' official repo; Letta details beyond its short
 1. Persona bloat: one owner per capability; overlapping descriptions get merged.
 2. Loading every agent's full prompt at startup (agent-dispatch cites ~211k tokens for 130 agents).
 3. Framework lock-in: files are the source of truth; the orchestration layer is ~150 lines.
+
+## Meta Muse and xAI Grok Bot (2026-11-13)
+
+Both are closed products; patterns were read from open analogues and public notes: nano-muse/nanoMuse (3.4k★),
+unicodef1wn/grokbot-field-notes (705★), nickvasilescu/grokbot-clone (191★). Primary vendor pages were not reachable
+from the build session; Sentinel details are from press coverage (UNVERIFIED).
+
+| Pattern | From | Adopted as |
+|---|---|---|
+| One agent, one job; description states owns / tools / source of truth / approvals | Grok Bot | agent contract fields, validated |
+| Prefer a new skill over a new agent | Grok Bot | rule in every agent's "Verify before done" |
+| Correction → principle, never the story; overfit test | Grok Bot field notes | `robin learn` overfit check |
+| Self-improvement capped (≤ 1 suggestion/week) | Grok Bot | weekly cap in `robin learn` |
+| `stay_silent` outcome | grokbot-clone | `SILENT` reply, logged not delivered |
+| Proof attached; 2 failed attempts = stop | Grok Bot | "Verify before done" section |
+| Readable, editable memory + forget | nanoMuse / Muse | `robin profile/remember/forget` |
+| Separate guard agent; read/send split; allow once/always | Muse Sentinel, grokbot-clone | proposal (guard/ is David's) |
+| Autonomy ladder investigate → draft → autopilot | Grok Bot | `metadata.autonomy` per agent |

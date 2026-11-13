@@ -114,7 +114,10 @@ def system_prompt() -> str:
     from robin import integrations
     private = sorted((ROOT / "harness" / "private").glob("*.md")) if integrations.company_context_enabled() else []
     company = "\n\n".join(f.read_text(encoding="utf-8") for f in private)
-    parts = [untrusted.SYSTEM_RULE, contract, roles, core] + ([company] if company else [])
+    from robin import profile
+    prefs = profile.read()
+    parts = [untrusted.SYSTEM_RULE, contract, roles, core] + ([company] if company else []) + \
+            ([f"<owner_profile>\n{prefs}\n</owner_profile>"] if prefs else [])
     return "\n\n".join(parts)
 
 
@@ -199,6 +202,12 @@ async def run(request: str, task_id: str | None = None) -> dict:
             usage = message.usage or {}
 
     output, out_hits = secret_scanner.redact(output)
+    # stay_silent (Grok Bot pattern): "SILENT ..." means nothing worth sending; logged, never delivered.
+    silent = output.strip().upper().startswith("SILENT")
+    if silent:
+        trace.log(task_id, "result", output=output, silent=True, cost_usd=cost, usage=usage, tools=tools_used)
+        return {"task": task_id, "output": "", "silent": True, "reason": output.strip()[6:].strip(" :-—"),
+                "cost_usd": cost, "words": 0, "tools": tools_used, "route": route_meta, "secret_findings": findings}
     cap = int(limits.get("reply_word_cap", WORD_CAP))
     top_skill = router.skills.get(route_meta["skills"][0]) if route_meta["skills"] else None
     if top_skill and top_skill.word_cap:

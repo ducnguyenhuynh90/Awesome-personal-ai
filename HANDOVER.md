@@ -32,7 +32,12 @@ Last session: 2026-11-13, Claude Code (cloud), branch `claude/robin-v2-agent-spe
   `robin doctor`, `robin tools list|enable|disable`, `robin ask --dry-run`. Company context is OFF (David: test first,
   don't touch company info/keys yet). 39 tests pass.
 
+- Muse / Grok Bot patterns (fifth pass, D-012): agent contracts (validated), verify-before-done, SILENT outcome,
+  owner profile (gitignored) with remember/forget, learning loop `robin feedback` + `robin learn` (1 rule/week, overfit
+  check, proposals in docs/proposals/). Approval scopes = proposal (guard/ blocked). 43 tests pass.
+
 ## In progress → next concrete step
+- After live runs: `robin feedback <task> --edit corrected.md` on real answers, then `robin learn` weekly.
 - David tests: `robin doctor` → set ANTHROPIC_API_KEY in .env → `robin ask "..."` on 4 active departments.
 - Repo made company-neutral (commit ce69563): spec, company unit file and company config live in gitignored
   harness/private/ (local only — keep a copy outside this container). Old commits still hold them: making the GitHub

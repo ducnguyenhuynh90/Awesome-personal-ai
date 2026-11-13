@@ -21,6 +21,7 @@ SKILLS_DIR = ROOT / ".claude" / "skills"
 TIERS = {"executor", "reviewer", "cheap", "deep"}
 SENSITIVITY = {"normal", "restricted"}
 AGENT_KINDS = {"department", "staff"}
+AUTONOMY = {"investigate", "draft", "autopilot"}  # autopilot = acts without a draft review; none yet
 
 
 @dataclass
@@ -184,6 +185,22 @@ def validate(agents: dict[str, Agent] | None = None, skills: dict[str, Skill] | 
             errors.append(f"{where}: write tools {sorted(bad)} need metadata.write_tools_approved (David only)")
         if a.kind == "department" and len(a.examples) < 3:
             errors.append(f"{where}: department agents need >= 3 metadata.examples")
+
+    # Agent contracts (Grok Bot pattern: one job, explicit ownership, autonomy level).
+    owners: dict[str, str] = {}
+    for key, a in agents.items():
+        if a.name == "reviewer":
+            continue  # verifier: David-owned, no work contract
+        for field in ("owns", "not_owns", "source_of_truth", "needs_approval", "autonomy"):
+            if not a.extra.get(field):
+                errors.append(f"agent {key}: metadata.{field} missing (agent contract)")
+        if a.extra.get("autonomy") and a.extra["autonomy"] not in AUTONOMY:
+            errors.append(f"agent {key}: metadata.autonomy must be one of {sorted(AUTONOMY)}")
+        for item in a.extra.get("owns") or []:
+            k = item.strip().lower()
+            if k in owners and owners[k] != key:
+                errors.append(f"agent {key}: owns '{item}' which {owners[k]} also owns — one owner per capability")
+            owners[k] = key
 
     for key, s in skills.items():
         if s.department not in departments | {"shared", "staff"}:

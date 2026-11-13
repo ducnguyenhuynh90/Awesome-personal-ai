@@ -9,6 +9,9 @@
   robin doctor                     what works now, what is missing (never prints keys)
   robin tools list|enable|disable NAME   optional tools/keys in config/integrations.yaml
   robin trace <task-id>            show a task's trace
+  robin feedback <task> --edit F | --down WHY   record David's correction
+  robin learn [--apply FILE]       one general rule per week from feedback
+  robin profile | remember "..." | forget "..."   owner profile (gitignored)
   robin kb lint|index|stale        knowledge checks / regenerate indexes / list stale nodes
   robin kb query [--near ID] [--hops N] [--market X] [--type T] [--text "..."]
   robin kb new ID TYPE "summary"   create a node
@@ -143,6 +146,9 @@ def cmd_ask(a):
         return 2
     from robin.orchestrator import run_sync
     res = run_sync(a.request)
+    if res.get("silent"):
+        print(f"(silent — nothing worth sending: {res.get('reason') or 'no reason given'})")
+        return 0
     print(res["output"])
     print(f"\n[{res['task']} · ${res.get('cost_usd', 0):.4f} · {res.get('words', 0)} words · route {res.get('route', {}).get('agent')}]",
           file=sys.stderr)
@@ -177,6 +183,41 @@ def cmd_tools(a):
     st = next((x for x in integrations.statuses() if x.name == a.name), None)
     if st and a.action == "enable" and st.missing:
         print(f"note: still missing {', '.join(st.missing)} — add to .env; until then this tool is skipped")
+    return 0
+
+
+def cmd_profile(a):
+    from robin import profile
+    if a.action == "show":
+        print(profile.read() or f"no profile yet — `robin remember \"...\"` creates {profile.PROFILE.relative_to(ROOT)}")
+    elif a.action == "remember":
+        print("remembered:", profile.remember(a.text))
+    else:
+        removed = profile.forget(a.text)
+        print("\n".join(f"forgot: {r}" for r in removed) or "nothing matched")
+    return 0
+
+
+def cmd_feedback(a):
+    from robin import learn
+    corrected = Path(a.edit).read_text(encoding="utf-8") if a.edit else ""
+    kind = "edit" if a.edit else "down"
+    print(f"saved {kind} for {a.task_id} → {learn.record(a.task_id, kind, note=a.down or '', corrected=corrected).name}")
+    return 0
+
+
+def cmd_learn(a):
+    from robin import integrations, learn
+    if a.apply:
+        print(learn.apply(Path(a.apply)))
+        return 0
+    integrations.load_env_file()
+    if not integrations.model_status().ready:
+        print("learning needs model access (cheap tier). `robin doctor` shows what is missing.")
+        return 2
+    prop = learn.learn(learn.cheap_reflect)
+    print(f"proposal: {prop.path.relative_to(ROOT)}\n  {prop.target_kind} {prop.target}: {prop.rule}" if prop
+          else "nothing learned (no new signal, rule did not generalise, or this week's proposal is already made)")
     return 0
 
 
@@ -233,6 +274,18 @@ def main(argv=None) -> int:
     s = sub.add_parser("ask"); s.add_argument("request"); s.add_argument("--dry-run", action="store_true",
         help="show routing, tools and prompt without calling the model"); s.set_defaults(fn=cmd_ask)
     sub.add_parser("doctor", help="what works now and what is missing").set_defaults(fn=cmd_doctor)
+    s = sub.add_parser("feedback", help="record David's correction (--edit FILE) or 👎 (--down WHY) for a task")
+    s.add_argument("task_id"); g = s.add_mutually_exclusive_group(required=True)
+    g.add_argument("--edit", help="file with David's corrected text"); g.add_argument("--down", help="why it was wrong")
+    s.set_defaults(fn=cmd_feedback)
+    s = sub.add_parser("learn", help="turn the best new feedback into one general rule (max 1/week)")
+    s.add_argument("--apply", help="apply a learning proposal file"); s.set_defaults(fn=cmd_learn)
+    for name, help_ in (("profile", "show the owner profile"), ("remember", "add a preference line"),
+                        ("forget", "remove preference lines containing TEXT")):
+        s = sub.add_parser(name, help=help_)
+        if name != "profile":
+            s.add_argument("text")
+        s.set_defaults(fn=cmd_profile, action={"profile": "show"}.get(name, name))
     s = sub.add_parser("tools", help="list / enable / disable optional tools")
     s.add_argument("action", choices=["list", "enable", "disable"]); s.add_argument("name", nargs="?")
     s.set_defaults(fn=cmd_tools)

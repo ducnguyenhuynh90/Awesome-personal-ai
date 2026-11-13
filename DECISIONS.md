@@ -69,3 +69,14 @@ Format: date · decision · why · alternatives rejected · who. Do not re-open 
 - Why: tune a few departments on real asks before widening; routing among 4 is easier to get right.
 - Rejected: deleting the other agents (they cost nothing while inactive and keep the catalogue complete).
 - Who: David.
+
+## D-012 · 2026-11-13 · Patterns from Meta Muse and xAI Grok Bot
+- Decision: adopt agent contracts (owns / not_owns / source_of_truth / needs_approval / autonomy, validated, one
+  owner per capability), verify-before-done (proof attached, stop after 2 failed attempts), a `SILENT` outcome,
+  a readable owner profile with remember/forget (gitignored), and a learning loop that turns one correction into
+  one general rule per week behind an overfit check. Approval scopes are proposed, not applied (guard/ is David's).
+- Why: both products keep each agent to one job, learn principles not stories, and stay quiet by default —
+  the same direction as spec §2, with concrete mechanisms we lacked.
+- Rejected for now: always-on per-agent computers, multi-agent "staff meeting" for every task (cost), autopilot
+  autonomy (no agent has earned it yet).
+- Who: David (asked), Claude.
