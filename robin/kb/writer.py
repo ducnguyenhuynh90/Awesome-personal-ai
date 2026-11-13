@@ -1,6 +1,6 @@
 """Single-writer path for knowledge changes (DECISIONS.md D-009).
 
-All agents (Robin's modes A/B/C, department agents, Luffy via Robin) write
+All agents (Robin's modes A/B/C, department agents, ticketing agents via Robin) write
 through these functions. A file lock serialises writers so concurrent tasks
 never race on the same file or on git. Every change appends to _changelog.md;
 `commit=True` makes it a git commit with the source in the message.

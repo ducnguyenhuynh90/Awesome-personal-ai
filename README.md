@@ -24,7 +24,7 @@ ask ─► chief-of-staff ─► department agent(s) ─► skill ─► reviewe
 | `guard/` | approval gate (default deny), untrusted wrapper, secret scanner — David-owned |
 | `robin/` | router, registry, orchestrator, knowledge tools, traces, CLI |
 | `evals/` | routing eval (offline) + process evals (live) |
-| `docs/` | spec v2, research on agent-team frameworks |
+| `docs/` | research on agent-team frameworks, proposals (spec and company config are local: `harness/private/`) |
 
 ## Quick start
 

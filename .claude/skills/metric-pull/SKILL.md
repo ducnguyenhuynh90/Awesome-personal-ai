@@ -34,7 +34,7 @@ Pulls a metric with a templated query; returns the number + query link. Aggregat
 3. Return aggregates only — never user-level rows or personal data.
 4. Give the number, the comparison (vs previous period / target), and the query link.
 5. If the number looks wrong (>3σ move), say so and check tracking before reporting.
-6. PostHog: EU instance, project 143966 (spec §12). If the metric has no definition in knowledge/metrics/, ask David ONE question proposing the most likely definition; do not list every variant.
+6. PostHog: region and project id are in the company context (harness/private/company.yaml or the company-context skill). If the metric has no definition in knowledge/metrics/, ask David ONE question proposing the most likely definition; do not list every variant.
 
 ## Output
 

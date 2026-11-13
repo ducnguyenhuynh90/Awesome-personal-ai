@@ -36,7 +36,7 @@ snippets, so they are unverified.
 > Pitfall: Citing search-result snippets without opening the page; grades were unverifiable (2026-11-13).
 
 ### 4. metric-pull — new last step + pitfall
-> Step: PostHog: EU instance, project 143966 (spec §12). If the metric has no definition in knowledge/metrics/,
+> Step: PostHog: region and project id from the company context (local config). If the metric has no definition in knowledge/metrics/,
 > ask David ONE question proposing the most likely definition; do not list every variant.
 > Pitfall: Answering "no access" with a long essay; the reply should be 3 lines: no number, why, the one thing needed.
 

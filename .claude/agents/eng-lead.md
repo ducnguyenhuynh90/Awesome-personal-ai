@@ -1,6 +1,6 @@
 ---
 name: eng-lead
-description: 'Use for engineering: reviewing tech specs and architecture, incident postmortems, technical risk. Ticket writing goes to Luffy/Zoro.'
+description: 'Use for engineering: reviewing tech specs and architecture, incident postmortems, technical risk. Ticket writing goes to the ticketing agents.'
 tools: Read, Grep, Glob, WebSearch, WebFetch, Write, Skill, mcp__kb__query, mcp__kb__add_gap
 model: sonnet
 skills:

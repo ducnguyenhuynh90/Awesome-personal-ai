@@ -9,5 +9,5 @@ reply_word_cap: 120
 autonomous_tasks_per_day: 5
 security:
   # Command run (with JSON on stdin: kind, location, author) when the secret scanner finds a secret.
-  # Set by the operator to S5's Security/IT reporting process. Empty = only tell David.
+  # Set by the operator to the company's Security/IT reporting process. Empty = only tell David.
   report_command: ""

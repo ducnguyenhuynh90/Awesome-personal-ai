@@ -59,7 +59,7 @@ Format: date · decision · why · alternatives rejected · who. Do not re-open 
 ## D-010 · 2026-11-13 · Restricted departments
 - Decision: finance, people and legal-compliance agents are `sensitivity: restricted`: outputs go only to the
   requester, nothing goes to the shared knowledge base, and people-partner never touches HR records.
-- Why: S5 never-expose rules (HR/legal records, payout formulas, non-public financials, confidential contracts).
+- Why: company never-expose rules (HR/legal records, payout formulas, non-public financials, confidential contracts).
 - Who: Claude.
 
 ## D-011 · 2026-11-13 · Start with four departments
