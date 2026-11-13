@@ -37,6 +37,9 @@ Start with `knowledge/INDEX.md`, then `HANDOVER.md`, then `org/INDEX.md`. Spec: 
 - Never expose: secrets, internal hostnames, HR/legal records, confidential contracts, payout formulas,
   non-public financials. Analytics = aggregates only; no user-level rows anywhere in the repo.
 - New company connectors need the AI Tool Request SOP (Notion) first.
+- **This GitHub repo is public.** Never commit company facts: strategy, priorities, revenue shares, targets, bonus
+  schemes, SLA terms, people, org charts, metric values or internal links. Agents read them at runtime from the
+  `company-context` / `team-context` skills or Notion. Methods (how to write, decide, run experiments) may live here.
 
 ## Working in this repo
 - Knowledge writes: kb tools (`mcp__kb__*`) or `robin kb ...` CLI. Run `robin kb lint` before commit.

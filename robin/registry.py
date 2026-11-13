@@ -35,6 +35,7 @@ class Skill:
     domains: list[str]
     path: Path
     body: str
+    word_cap: int | None = None
 
     def search_text(self) -> str:
         return " ".join([self.name.replace("-", " "), self.description, " ".join(self.tags), " ".join(self.examples)])
@@ -88,6 +89,7 @@ def load_skills(skills_dir: Path = SKILLS_DIR) -> dict[str, Skill]:
             domains=_list(md, "domains"),
             path=path,
             body=body,
+            word_cap=md.get("word_cap"),
         )
         skills[skill.name or path.parent.name] = skill
     return skills

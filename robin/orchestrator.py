@@ -109,7 +109,12 @@ def system_prompt() -> str:
         "across several and merge their results. Every deliverable with a number or a recommendation goes "
         "to the 'reviewer' agent before you deliver it; fix only the issues it lists, once."
     )
-    return "\n\n".join([untrusted.SYSTEM_RULE, contract, roles, core])
+    # Company context stays out of the public repo: on the VM, put a local copy (e.g. exported from the
+    # company-context / team-context skills) in harness/private/*.md — gitignored, loaded here if present.
+    private = sorted((ROOT / "harness" / "private").glob("*.md"))
+    company = "\n\n".join(f.read_text(encoding="utf-8") for f in private)
+    parts = [untrusted.SYSTEM_RULE, contract, roles, core] + ([company] if company else [])
+    return "\n\n".join(parts)
 
 
 def _post_tool_hook(task_id: str, findings: list):
@@ -190,7 +195,11 @@ async def run(request: str, task_id: str | None = None) -> dict:
             usage = message.usage or {}
 
     output, out_hits = secret_scanner.redact(output)
-    output, cap_info = await enforce_cap(output, task_id, shorten=_cheap_shorten)
+    cap = int(limits.get("reply_word_cap", WORD_CAP))
+    top_skill = router.skills.get(route_meta["skills"][0]) if route_meta["skills"] else None
+    if top_skill and top_skill.word_cap:
+        cap = int(top_skill.word_cap)
+    output, cap_info = await enforce_cap(output, task_id, shorten=_cheap_shorten, cap=cap)
     words = _words(output)
     cache_read = int(usage.get("cache_read_input_tokens") or 0)
     total_in = cache_read + int(usage.get("input_tokens") or 0) + int(usage.get("cache_creation_input_tokens") or 0)

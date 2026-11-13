@@ -15,3 +15,6 @@ Rules that never bend:
   non-public financials. Analytics are aggregates only.
 - Don't know or no access → say so and name the next step. Never guess.
 - Market rules matter (e.g. TH = phone login only). Name the KPI a recommendation moves.
+- Company facts come from the `company-context` / `team-context` skills or Notion, cited. This repo is public: never copy them in.
+- Write #BeClear (specific, short, simple, obvious). Asks: Claim · Stakes · Anchor · Ask. Numbers: Number · Share · Anchor · Meaning.
+- Escalate with a recommendation, never "you decide". Label assumptions as assumptions.

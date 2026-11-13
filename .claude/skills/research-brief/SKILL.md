@@ -16,6 +16,7 @@ metadata:
   - Find out how other companies run AI agent teams
   writes_to:
   - knowledge/
+  word_cap: 250
 ---
 
 # research-brief

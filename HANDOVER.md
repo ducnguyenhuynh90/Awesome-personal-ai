@@ -22,7 +22,14 @@ Last session: 2026-11-13, Claude Code (cloud), branch `claude/robin-v2-agent-spe
   to outbox/<task>-full.md, shortens once with the cheap model, and falls back to a deterministic trim. 33 tests pass.
 - Network policy of the cloud session blocked gmanetwork.com and philstar.com; research needs bsp.gov.ph, pagcor.ph, inquirer.net.
 
+- Company frameworks (third pass): read company-context + team-context skills. The repo is PUBLIC, so only methods
+  were added to 13 agents (#BeClear, #Context, #DontPassMessage, escalate with a recommendation, labelled assumptions,
+  Product's improvement loop / experiment gate / review depth, revenue-quality check). Company facts are read at
+  runtime from those skills (or gitignored harness/private/ on the VM). Reviewer changes: docs/proposals/2026-11-13-reviewer-company-checks.md.
+- Reply cap is now per skill: default 120 (config/limits.yaml reply_word_cap), research skills 250 (spec: one screen).
+
 ## In progress → next concrete step
+- David decides: make the GitHub repo private? (spec, product names, markets, PostHog project id, his name are public now.)
 - Live run on the VM: `robin eval process --only p12-brevity-research,p13-brevity-product,p14-brevity-data,p15-brevity-marketing`
   to confirm the code-enforced cap with the real orchestrator (subagent tests here bypass the orchestrator).
 - Live P0 acceptance: on the VM with credentials, run `robin ask "<PH KYC question>"`, then `robin eval process`; record cost here.
