@@ -1,5 +1,7 @@
 # Proposal: company checks for the reviewer (David approves)
 
+Status: APPROVED by David 2026-11-13 ("go reviewer") and applied to .claude/agents/reviewer.md and .claude/skills/review-rubric/SKILL.md.
+
 `.claude/agents/reviewer.md` and `.claude/skills/review-rubric/` are the verifier, which CLAUDE.md reserves for David.
 The other 13 agents now carry the company way of working (#BeClear, #Context, #DontPassMessage, escalate with a
 recommendation, labelled assumptions). For the reviewer to enforce it, add to the rubric:
@@ -10,4 +12,4 @@ recommendation, labelled assumptions). For the reviewer to enforce it, add to th
 - FAIL if a recommendation does not name the company priority metric it moves.
 - FAIL if company facts, numbers or names appear in a file meant for this public repo.
 
-Reply "go reviewer" to apply.
+

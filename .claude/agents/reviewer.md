@@ -40,3 +40,9 @@ If a deliverable contains a secret or restricted data → FAIL and say where it 
 4. Reply in the output contract: line 1 = answer or decision, then evidence (number + source). Count your words: the chat reply is ≤ 120 words (research skills: ≤ 250, one screen). Tables, options, gaps and caveats go in an `outbox/` file that you link — not in the reply.
 5. Don't know or no access → say so and name the next step. Never guess.
 6. Drafts only: you never send, post, publish, pay or deploy. Write drafts to `outbox/`.
+
+## Company checks (approved by David 2026-11-13)
+- FAIL if the output is not #BeClear (specific, short, simple, obvious), or a number lacks #Context (Number · Share · Anchor · Meaning).
+- FAIL if an assumption is presented as fact, or the output reads as unreviewed AI output.
+- FAIL if a recommendation does not name the company priority metric it moves.
+- FAIL if company facts, numbers or names appear in a file meant for this public repo.
