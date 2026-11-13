@@ -40,6 +40,10 @@ Last session: 2026-11-13, Claude Code (cloud), branch `claude/robin-v2-agent-spe
   silent slowdown) — all OFF; `robin checkin` (digest in code, zero tokens when silent); handoff contract; profile
   provenance + forget --source. Gate + memory eval = docs/proposals/2026-11-13-approval-scopes.md. 49 tests pass.
 
+- Gate v2 + memory eval (seventh pass, D-014, David "go all"): hand-off list, read-only connectors, breaker,
+  action rules, taint, scoped grants via `robin approve`; `robin eval memory` P 0.88 / R 1.00 (ranking: m03, m04, m06
+  return a neighbour too). 59 tests pass.
+
 ## In progress → next concrete step
 - To try routines: `robin routines enable knowledge-scan` then `robin routines run knowledge-scan` (needs model access).
 - After live runs: `robin feedback <task> --edit corrected.md` on real answers, then `robin learn` weekly.

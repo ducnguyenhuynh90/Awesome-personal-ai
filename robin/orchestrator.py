@@ -121,14 +121,37 @@ def system_prompt() -> str:
     return "\n\n".join(parts)
 
 
+UNTRUSTED_TOOLS = {"WebFetch", "WebSearch"}
+
+
+def taint_source(tool: str, tool_input: dict) -> str:
+    """Which reads make a task tainted (Meta Muse): web, any outside connector, raw source excerpts."""
+    if tool in UNTRUSTED_TOOLS:
+        return tool
+    if tool.startswith("mcp__") and not tool.startswith("mcp__kb__"):
+        return tool
+    if tool == "Read":
+        path = Path(str(tool_input.get("file_path", "")))
+        try:
+            rel = path.resolve().relative_to(ROOT.resolve()).as_posix()
+        except ValueError:
+            return f"Read outside repo: {path.name}"
+        if rel.startswith(("knowledge/_sources/", "outbox/", "evals/process/fixtures/")):
+            return f"Read {rel}"
+    return ""
+
+
 def _post_tool_hook(task_id: str, findings: list):
     async def hook(input_data, tool_use_id, context):  # noqa: ARG001
         tool = input_data.get("tool_name", "")
         response = input_data.get("tool_response")
         text = response if isinstance(response, str) else str(response)
         hits = secret_scanner.scan(text)
+        tainted_by = taint_source(tool, input_data.get("tool_input") or {})
+        if tainted_by:
+            approval_gate.mark_tainted(task_id, tainted_by)
         trace.log(task_id, "tool", tool=tool, tool_use_id=tool_use_id, chars=len(text),
-                  secrets=[h.kind for h in hits])
+                  secrets=[h.kind for h in hits], tainted_by=tainted_by)
         if hits:
             findings.extend((tool, h.kind) for h in hits)
         out = {"hookEventName": "PostToolUse"}

@@ -90,3 +90,13 @@ Format: date · decision · why · alternatives rejected · who. Do not re-open 
   spec §2.6–2.8 and cut cost.
 - Gate changes (taint, action rules, scoped grants, breaker) and a memory eval are proposed for David, not applied.
 - Who: David (asked), Claude.
+
+## D-014 · 2026-11-13 · Gate v2 and memory eval
+- Decision: the approval gate checks, in order: hard hand-off (money, credentials, permissions, deploy, delete,
+  publish — never an agent), read-only connectors (`send: false`), a circuit breaker (3 denials in a row), reads and
+  drafts, action rules (auto | when_told | ask | handoff; default ask), then grants (once | task | until:DATE, exact
+  input match). A task that read untrusted content (web, connectors, raw sources) loses auto rules and standing
+  grants. Denials say "do not retry"; `ask` leaves a pending file the check-in shows. Memory retrieval is measured
+  by evals/memory (synthetic fixture; baseline P 0.88, R 1.00).
+- Why: Meta Muse (Sentinel, taint), OpenAI dots (action behaviours, always-human list), Grok Bot (approval memory).
+- Who: David ("go all").

@@ -66,7 +66,10 @@ Without tools or company context, agents still work: they answer from the web an
 4. New tool: copy a block in `config/integrations.yaml` (http `url` or stdio `command`), write keys as `${VAR}`.
 5. Company context: drop `.md` files in `harness/private/` (gitignored), then `robin tools enable company_context`.
 
-Write tools stay blocked by the approval gate even when a tool is enabled.
+Write tools stay blocked by the approval gate even when a tool is enabled. To let an agent do one write:
+`robin approve <task-id> <tool> [--scope once|task|until:YYYY-MM-DD] [--match channel=C123]`. Money, credentials,
+permissions, deploys, deletes and publishing can never be approved for an agent. Standing rules live in
+`config/action_rules.yaml` (auto | when_told | ask | handoff); `send: false` makes a connector read-only.
 
 ## Add to the org
 

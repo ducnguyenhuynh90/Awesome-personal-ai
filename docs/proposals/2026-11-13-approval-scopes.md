@@ -1,7 +1,8 @@
 # Proposal: a stronger safety gate (David approves — `guard/` and `evals/` are his)
 
-Status: **awaiting David** — reply "go gate" (items 1–5) and/or "go memory eval" (item 6).
-Edits to `guard/` were blocked by the auto-mode classifier as changes to oversight, so nothing here is applied.
+Status: APPROVED by David 2026-11-13 ("go all") and applied: guard/approval_gate.py, config/action_rules.yaml,
+`send:` per connector in config/integrations.yaml, taint marking in robin/orchestrator.py, `robin approve`,
+evals/memory (baseline precision 0.88, recall 1.00).
 
 Sources: Meta Muse (Sentinel), OpenAI dots (action rules), xAI Grok Bot and its open clone (approval memory).
 See docs/research/agent-teams.md for what is verified vs not.

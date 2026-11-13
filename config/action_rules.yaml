@@ -1,0 +1,14 @@
+# Standing action rules (OpenAI dots pattern). Approved by David 2026-11-13.
+# behaviour:
+#   auto       act without asking — ignored once the task has read untrusted content (taint)
+#   when_told  only with a grant David gave for this task (`robin approve <task> <tool>`)
+#   ask        same, and leaves approvals/<task>.pending.json so the check-in shows it   (default for any write)
+#   handoff    never by an agent — David does it himself
+# Money, credentials, permissions, deploys, deletes and publishing are ALWAYS handoff (hard-coded in
+# guard/approval_gate.py); no rule here can change that. First matching pattern wins.
+rules: []
+# Examples (uncomment to use):
+#  - {pattern: "mcp__slack__*draft*", behaviour: auto}        # drafts in Slack are safe
+#  - {pattern: "mcp__gmail__create_draft", behaviour: auto}
+#  - {pattern: "mcp__notion__*", behaviour: when_told}
+#  - {pattern: "mcp__calendar__*", behaviour: handoff}

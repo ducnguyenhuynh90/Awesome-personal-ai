@@ -14,6 +14,7 @@
   robin profile | remember "..." | forget "..."   owner profile (gitignored)
   robin routines list|run|enable|disable NAME     scheduled routines (read-only, SILENT by default)
   robin checkin                    digest in code: one message or silent, zero tokens when silent
+  robin approve TASK TOOL [--scope once|task|until:DATE] [--match k=v] [--standing]   grant one write
   robin kb lint|index|stale        knowledge checks / regenerate indexes / list stale nodes
   robin kb query [--near ID] [--hops N] [--market X] [--type T] [--text "..."]
   robin kb new ID TYPE "summary"   create a node
@@ -87,8 +88,16 @@ def cmd_eval(a):
     from robin.router import Router
     if a.suite == "process":
         return _eval_process(a)
+    if a.suite == "memory":
+        from evals.memory.run import run
+        res = run()
+        for r in res["rows"]:
+            if r["recall"] < 1 or r["precision"] < 1:
+                print(f"  {r['id']}: P={r['precision']:.2f} R={r['recall']:.2f} got={r['got']} want={r['expect']}")
+        print(f"memory eval: precision {res['precision']:.2f} · recall {res['recall']:.2f} · F1 {res['f1']:.2f}")
+        return 0 if res["recall"] >= 0.9 and res["precision"] >= 0.8 else 1
     if a.suite != "routing":
-        print("suites: routing (offline, free) | process (live, costs money)")
+        print("suites: routing | memory (offline, free) | process (live, costs money)")
         return 2
     cases = yaml.safe_load((ROOT / "evals" / "routing" / f"{a.set}.yaml").read_text())["cases"]
     # focus set = active departments only (config/org.yaml); other sets measure the full catalogue.
@@ -166,6 +175,10 @@ def cmd_doctor(a):
     print(f".env: {'loaded ' + ', '.join(loaded) if loaded else ('present' if integrations.ENV_FILE.exists() else 'none (optional; copy .env.example)')}")
     for st in integrations.statuses():
         print("  " + st.line())
+    from guard import approval_gate
+    standing = approval_gate.APPROVALS / "standing.json"
+    grants = (json.loads(standing.read_text()).get("grants", []) if standing.exists() else [])
+    print(f"standing grants: {', '.join(g['tool'] + ' ' + g['scope'] for g in grants) or 'none'}")
     reg, kb = validate(), lint.lint()
     print(f"registry: {'OK' if not reg else f'{len(reg)} problem(s)'} · knowledge: {'OK' if not kb else f'{len(kb)} problem(s)'}")
     ready = integrations.model_status().ready
@@ -262,6 +275,19 @@ def cmd_checkin(a):
     return 0
 
 
+def cmd_approve(a):
+    """David's only way to grant an agent a write (never called by agents)."""
+    from guard import approval_gate
+    match = dict(kv.split("=", 1) for kv in (a.match or []))
+    try:
+        path = approval_gate.approve(None if a.standing else a.task_id, a.tool, a.scope, match or None,
+                                     standing=a.standing)
+    except ValueError as e:
+        print(f"refused: {e}"); return 2
+    print(f"granted {a.tool} ({a.scope}{', ' + str(match) if match else ''}) → {path.relative_to(ROOT)}")
+    return 0
+
+
 def cmd_trace(a):
     from robin import trace
     recs = trace.read(a.task_id)
@@ -315,6 +341,12 @@ def main(argv=None) -> int:
     s = sub.add_parser("ask"); s.add_argument("request"); s.add_argument("--dry-run", action="store_true",
         help="show routing, tools and prompt without calling the model"); s.set_defaults(fn=cmd_ask)
     sub.add_parser("doctor", help="what works now and what is missing").set_defaults(fn=cmd_doctor)
+    s = sub.add_parser("approve", help="David grants an agent one write: robin approve TASK TOOL [--scope ...]")
+    s.add_argument("task_id", help="task id, or 'standing' with --standing"); s.add_argument("tool")
+    s.add_argument("--scope", default="once", help="once (default) | task | until:YYYY-MM-DD")
+    s.add_argument("--match", nargs="*", help="exact input match, e.g. channel=C123")
+    s.add_argument("--standing", action="store_true", help="standing grant across tasks (needs --scope until:DATE)")
+    s.set_defaults(fn=cmd_approve)
     s = sub.add_parser("routines", help="list / run / enable / disable routines (config/routines.yaml)")
     s.add_argument("action", choices=["list", "run", "enable", "disable"]); s.add_argument("name", nargs="?")
     s.add_argument("--force", action="store_true", help="run even if limits say skip"); s.set_defaults(fn=cmd_routines)
