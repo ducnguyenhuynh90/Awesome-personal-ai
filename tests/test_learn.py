@@ -73,3 +73,15 @@ def test_apply_adds_pitfall(env):
     body = (skill / "SKILL.md").read_text()
     assert "## Pitfalls (learned)" in body and "- Lead with the decision." in body
     assert "Status: applied" in prop.read_text() and "demo" in out
+
+
+def test_profile_provenance_and_forget_by_source(tmp_path):
+    from robin import profile
+    path = tmp_path / "profile.md"
+    profile.remember("Weekly sync is Friday afternoon", source="calendar", path=path)
+    profile.remember("Prefers tables for comparisons", source="david", status="done", path=path)
+    text = path.read_text()
+    assert "[source: calendar ·" in text and "status: done" in text
+    removed = profile.forget(source="calendar", path=path)
+    assert len(removed) == 1 and "Weekly sync" in removed[0]
+    assert "Prefers tables" in path.read_text()

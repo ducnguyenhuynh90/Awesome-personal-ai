@@ -1,18 +1,27 @@
-# Proposal: approval scopes in the safety gate (David approves — `guard/` is his)
+# Proposal: a stronger safety gate (David approves — `guard/` and `evals/` are his)
 
-Status: **awaiting David** ("go gate"). Not applied: edits to `guard/` were blocked as loosening oversight.
+Status: **awaiting David** — reply "go gate" (items 1–5) and/or "go memory eval" (item 6).
+Edits to `guard/` were blocked by the auto-mode classifier as changes to oversight, so nothing here is applied.
 
-From Meta Muse (Sentinel) and Grok Bot (approval memory):
+Sources: Meta Muse (Sentinel), OpenAI dots (action rules), xAI Grok Bot and its open clone (approval memory).
+See docs/research/agent-teams.md for what is verified vs not.
 
-1. **Allow once** (default): `approvals/<task>.json` with `"scope": "once"` is consumed on first use.
-   Today a task token can be reused for the whole task.
-2. **Always allow** for safe, repetitive writes (e.g. posting a draft to David's own DM):
-   `approvals/always.json`, set only by `robin approve --always`. Hard-refused for any tool matching
-   pay / payment / transfer / refund / payout / deploy / release / permission / role / grant / delete / remove / drop.
-3. **Read vs send per connector**: keep reads automatic (`get/list/search/read/fetch/query`), send always gated —
-   already true; add a per-connector `send: off` switch in `config/integrations.yaml` so a connector can be read-only
-   even with a token.
-4. **Don't allow = don't retry**: on deny, the hook reason tells the agent not to retry the same call.
+1. **Taint (Meta Muse, verified).** Once a task has read untrusted content (web, email, Slack, files), every write
+   in that task needs a per-draft token — no standing approval applies. Muse relies on this because prompt
+   injection is still unsolved. Fit: `guard/untrusted.wrap()` marks the task tainted in the trace;
+   `approval_gate.decide()` ignores `always` grants for tainted tasks. Effort S.
+2. **Four action behaviours (OpenAI dots, verified).** `config/action_rules.yaml`: `{pattern, behaviour: auto |
+   when_told | ask | handoff}`. A hard-coded **always-handoff** list nobody can override: pay / transfer / refund /
+   payout / credentials / password / permission / deploy / delete / publish. `decide()` reads rules before tokens.
+   Effort M.
+3. **Scoped, expiring grants (Muse, unverified; Grok clone).** Token scopes `once | task | until:<date>`; the call
+   must match the granted tool and target exactly; `once` is consumed on use. Effort M.
+4. **Circuit breaker (Codex docs; Grok clone).** 3 denials in a row in one task → stop the task and report. A denied
+   call is never retried; a new message from David expires pending approvals. Effort S.
+5. **Read vs send per connector.** `send: off` per tool in `config/integrations.yaml` makes a connector read-only
+   even with a token. Effort S.
+6. **Memory retrieval eval (New Computer's Dot).** `evals/memory/cases.yaml`: labelled queries → expected profile /
+   knowledge lines from synthetic owners; score precision and recall of `kb query` + profile retrieval. Effort M.
 
-Risk: "always" widens what runs without a per-task "go". Mitigation: the never-always list, and `robin doctor`
-lists every standing approval.
+Already built without touching guard/: proactive routines run with no external tools and no shell/edit tools,
+so they are read-only by construction (robin/orchestrator.py, `proactive=True`).

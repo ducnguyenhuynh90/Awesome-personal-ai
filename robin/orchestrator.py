@@ -158,7 +158,9 @@ def build_prompt(request: str, router: Router) -> tuple[str, dict]:
     return "\n\n".join(parts), meta
 
 
-async def run(request: str, task_id: str | None = None) -> dict:
+async def run(request: str, task_id: str | None = None, proactive: bool = False) -> dict:
+    """proactive=True (routines): no external tools are loaded and shell/edit tools are disabled, so the run
+    is read-only by construction; it may only draft to outbox/ and update the knowledge base."""
     from claude_agent_sdk import (AssistantMessage, ClaudeAgentOptions, HookMatcher, ResultMessage,
                                   ToolUseBlock, query)
 
@@ -180,7 +182,8 @@ async def run(request: str, task_id: str | None = None) -> dict:
         system_prompt=system_prompt(),
         model=models["tiers"]["executor"],
         setting_sources=["project"],
-        mcp_servers={"kb": build_kb_server(), **integrations.mcp_servers()},
+        mcp_servers={"kb": build_kb_server(), **({} if proactive else integrations.mcp_servers())},
+        disallowed_tools=["Bash", "Edit", "NotebookEdit"] if proactive else [],
         cwd=str(ROOT),
         max_budget_usd=float(limits["per_task_usd"]),
         max_turns=int(limits.get("max_turns", 30)),
@@ -203,6 +206,11 @@ async def run(request: str, task_id: str | None = None) -> dict:
 
     output, out_hits = secret_scanner.redact(output)
     # stay_silent (Grok Bot pattern): "SILENT ..." means nothing worth sending; logged, never delivered.
+    failed = proactive and output.strip().upper().startswith("FAILED")
+    if failed:
+        trace.log(task_id, "result", output=output, failed=True, cost_usd=cost, usage=usage, tools=tools_used)
+        return {"task": task_id, "output": "", "failed": True, "reason": output.strip()[6:].strip(" :-—"),
+                "cost_usd": cost, "words": 0, "tools": tools_used, "route": route_meta, "secret_findings": findings}
     silent = output.strip().upper().startswith("SILENT")
     if silent:
         trace.log(task_id, "result", output=output, silent=True, cost_usd=cost, usage=usage, tools=tools_used)
@@ -223,5 +231,5 @@ async def run(request: str, task_id: str | None = None) -> dict:
             "route": route_meta, "secret_findings": findings + [("output", h.kind) for h in out_hits]}
 
 
-def run_sync(request: str) -> dict:
-    return asyncio.run(run(request))
+def run_sync(request: str, proactive: bool = False) -> dict:
+    return asyncio.run(run(request, proactive=proactive))

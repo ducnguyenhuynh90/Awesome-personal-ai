@@ -80,3 +80,13 @@ Format: date · decision · why · alternatives rejected · who. Do not re-open 
 - Rejected for now: always-on per-agent computers, multi-agent "staff meeting" for every task (cost), autopilot
   autonomy (no agent has earned it yet).
 - Who: David (asked), Claude.
+
+## D-013 · 2026-11-13 · Routines, check-ins and handoffs from Muse / Grok Bot / dots
+- Decision: routines are typed contracts (config/routines.yaml, validated) that run in a read-only proactive mode
+  (no external tools, no shell/edit), reply SILENT unless `notify_if` is met, report FAILED instead of using old data,
+  and are logged with run limits and a silent-streak slowdown. Check-ins build their digest in code (zero tokens when
+  silent). Handoffs carry exact ids and a done-line. Profile lines carry source and status; forget by source.
+- Why: all three products converge on quiet-by-default, read-only background work and typed schedules; these fit
+  spec §2.6–2.8 and cut cost.
+- Gate changes (taint, action rules, scoped grants, breaker) and a memory eval are proposed for David, not applied.
+- Who: David (asked), Claude.

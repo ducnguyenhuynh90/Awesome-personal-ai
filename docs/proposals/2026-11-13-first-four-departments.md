@@ -1,6 +1,6 @@
 # Proposal: lessons from the first live run of the four active departments
 
-Status: **awaiting David's approval**. These changes touch `.claude/` and `evals/`, which CLAUDE.md reserves
+Status: APPROVED by David 2026-11-13 ("fix all") and applied.
 for David, so they are proposed here instead of committed. Reply "go" to apply all, or name the items.
 
 ## Smoke test, 2026-11-13 (one real ask per department, run as Claude Code subagents)

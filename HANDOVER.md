@@ -36,7 +36,12 @@ Last session: 2026-11-13, Claude Code (cloud), branch `claude/robin-v2-agent-spe
   owner profile (gitignored) with remember/forget, learning loop `robin feedback` + `robin learn` (1 rule/week, overfit
   check, proposals in docs/proposals/). Approval scopes = proposal (guard/ blocked). 43 tests pass.
 
+- Muse / Grok Bot / dots deep dive (sixth pass, D-013): routines (typed, read-only proactive mode, run log, limits,
+  silent slowdown) — all OFF; `robin checkin` (digest in code, zero tokens when silent); handoff contract; profile
+  provenance + forget --source. Gate + memory eval = docs/proposals/2026-11-13-approval-scopes.md. 49 tests pass.
+
 ## In progress → next concrete step
+- To try routines: `robin routines enable knowledge-scan` then `robin routines run knowledge-scan` (needs model access).
 - After live runs: `robin feedback <task> --edit corrected.md` on real answers, then `robin learn` weekly.
 - David tests: `robin doctor` → set ANTHROPIC_API_KEY in .env → `robin ask "..."` on 4 active departments.
 - Repo made company-neutral (commit ce69563): spec, company unit file and company config live in gitignored

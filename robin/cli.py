@@ -12,6 +12,8 @@
   robin feedback <task> --edit F | --down WHY   record David's correction
   robin learn [--apply FILE]       one general rule per week from feedback
   robin profile | remember "..." | forget "..."   owner profile (gitignored)
+  robin routines list|run|enable|disable NAME     scheduled routines (read-only, SILENT by default)
+  robin checkin                    digest in code: one message or silent, zero tokens when silent
   robin kb lint|index|stale        knowledge checks / regenerate indexes / list stale nodes
   robin kb query [--near ID] [--hops N] [--market X] [--type T] [--text "..."]
   robin kb new ID TYPE "summary"   create a node
@@ -56,8 +58,9 @@ def cmd_skills(a):
 
 
 def cmd_validate(a):
-    from robin.registry import validate
-    errors = validate()
+    from robin import routines
+    from robin.registry import load_agents, validate
+    errors = validate() + routines.validate(set(load_agents()))
     _print(errors)
     print(f"registry: {'OK' if not errors else f'{len(errors)} problem(s)'}")
     return 1 if errors else 0
@@ -191,9 +194,9 @@ def cmd_profile(a):
     if a.action == "show":
         print(profile.read() or f"no profile yet — `robin remember \"...\"` creates {profile.PROFILE.relative_to(ROOT)}")
     elif a.action == "remember":
-        print("remembered:", profile.remember(a.text))
+        print("remembered:", profile.remember(a.text, source=a.source, status=a.status))
     else:
-        removed = profile.forget(a.text)
+        removed = profile.forget(a.text or "", source=a.source if a.source != "david" else "")
         print("\n".join(f"forgot: {r}" for r in removed) or "nothing matched")
     return 0
 
@@ -218,6 +221,44 @@ def cmd_learn(a):
     prop = learn.learn(learn.cheap_reflect)
     print(f"proposal: {prop.path.relative_to(ROOT)}\n  {prop.target_kind} {prop.target}: {prop.rule}" if prop
           else "nothing learned (no new signal, rule did not generalise, or this week's proposal is already made)")
+    return 0
+
+
+def cmd_routines(a):
+    from robin import integrations, routines
+    rs = routines.load()
+    if a.action == "list":
+        for name, r in rs.items():
+            last = (routines.runs(name) or [{}])[-1]
+            trig = r["trigger"].get("cron") or r["trigger"].get("event")
+            print(f"{name:18} {'on ' if r.get('enabled') else 'off'} owner={r['owner']:15} trigger={trig}  "
+                  f"last={last.get('status', '-')} {last.get('ts', '')}  silent_streak={routines.silent_streak(name)}")
+        return 0
+    if a.action in ("enable", "disable"):
+        from robin.integrations import set_enabled
+        print(set_enabled(a.name, a.action == "enable", routines.CONFIG))
+        return 0
+    if a.name not in rs:
+        print(f"no routine '{a.name}'"); return 2
+    ok, why = routines.can_run(a.name, rs[a.name])
+    if not ok and not a.force:
+        print(f"skipped: {why}"); routines.log_run(a.name, "skipped", why); return 0
+    integrations.load_env_file()
+    if not integrations.model_status().ready:
+        print("routine needs model access — robin doctor"); return 2
+    from robin.orchestrator import run_sync
+    res = run_sync(routines.proactive_prompt(a.name, rs[a.name]), proactive=True)
+    status = "failed" if res.get("failed") else "silent" if res.get("silent") else "succeeded"
+    routines.log_run(a.name, status, res.get("reason", ""), res["task"], res.get("cost_usd", 0))
+    print(f"{a.name}: {status}" + (f" — {res.get('reason')}" if res.get("reason") else "") +
+          (f"\n{res['output']}" if res.get("output") else ""))
+    return 0
+
+
+def cmd_checkin(a):
+    from robin import checkin
+    res = checkin.run()
+    print(res.get("message") or f"({res['status']}: {res.get('reason')})")
     return 0
 
 
@@ -274,6 +315,10 @@ def main(argv=None) -> int:
     s = sub.add_parser("ask"); s.add_argument("request"); s.add_argument("--dry-run", action="store_true",
         help="show routing, tools and prompt without calling the model"); s.set_defaults(fn=cmd_ask)
     sub.add_parser("doctor", help="what works now and what is missing").set_defaults(fn=cmd_doctor)
+    s = sub.add_parser("routines", help="list / run / enable / disable routines (config/routines.yaml)")
+    s.add_argument("action", choices=["list", "run", "enable", "disable"]); s.add_argument("name", nargs="?")
+    s.add_argument("--force", action="store_true", help="run even if limits say skip"); s.set_defaults(fn=cmd_routines)
+    sub.add_parser("checkin", help="digest built in code: one message or silent (no model call)").set_defaults(fn=cmd_checkin)
     s = sub.add_parser("feedback", help="record David's correction (--edit FILE) or 👎 (--down WHY) for a task")
     s.add_argument("task_id"); g = s.add_mutually_exclusive_group(required=True)
     g.add_argument("--edit", help="file with David's corrected text"); g.add_argument("--down", help="why it was wrong")
@@ -283,8 +328,12 @@ def main(argv=None) -> int:
     for name, help_ in (("profile", "show the owner profile"), ("remember", "add a preference line"),
                         ("forget", "remove preference lines containing TEXT")):
         s = sub.add_parser(name, help=help_)
+        if name == "remember":
+            s.add_argument("text"); s.add_argument("--status", default="", help="open | done | planned")
+        if name == "forget":
+            s.add_argument("text", nargs="?")
         if name != "profile":
-            s.add_argument("text")
+            s.add_argument("--source", default="david", help="where it was learned (david, slack, gmail, ...)")
         s.set_defaults(fn=cmd_profile, action={"profile": "show"}.get(name, name))
     s = sub.add_parser("tools", help="list / enable / disable optional tools")
     s.add_argument("action", choices=["list", "enable", "disable"]); s.add_argument("name", nargs="?")

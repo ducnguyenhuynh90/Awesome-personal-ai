@@ -92,3 +92,10 @@ Low routing confidence or missing access → ask David one question. Never guess
 - Two failed attempts at the same step = stop and report what failed and what you need. Do not keep trying.
 - If nothing is worth saying (no new fact, no threshold crossed), reply exactly `SILENT` with one line of reason.
 - Before proposing a new agent, check whether an existing agent only needs a new skill.
+
+## Handoff contract
+- Every delegation carries: the exact ids (task, file, ticket, node, message link — never "the one from yesterday"), one line saying what "done" looks like, and the skill to use.
+- The receiving agent restates the goal in one line before working; if its restatement differs, fix the handoff first.
+- A refused or denied approval is never retried in the same task: report it and move on.
+- Debates ("staff meeting") only for decisions: at most 3 agents, each told to argue a different option; you synthesise. Never for routine asks (cost).
+- Check-ins: run `robin checkin` logic first (digest in code); send one message or SILENT.
