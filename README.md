@@ -71,6 +71,18 @@ Write tools stay blocked by the approval gate even when a tool is enabled. To le
 permissions, deploys, deletes and publishing can never be approved for an agent. Standing rules live in
 `config/action_rules.yaml` (auto | when_told | ask | handoff); `send: false` makes a connector read-only.
 
+## Run on Claude Code cloud (claude.ai/code)
+
+- Open the repo in a cloud session: `.claude/hooks/session-start.sh` installs Robin, and the agents and skills in
+  `.claude/` load automatically. Ask the chief of staff or a department agent directly; no API key needed.
+- Safety in cloud sessions: `guard/claude_code_hook.py` (registered in `.claude/settings.json`) sends every company
+  connector write (Slack, Gmail, Notion, Drive, ...) through the approval gate, with the session id as task id.
+  Reads and repo work are untouched. Approve one write: `robin approve <session-id> <tool>`.
+- Daily routine: a cloud scheduled task "Robin daily knowledge scan" runs at 06:06 (Asia/Ho_Chi_Minh) in a fresh
+  session: knowledge-scan as research-lead, web only, knowledge commits to branch `robin/knowledge-updates`,
+  then `robin checkin`; it messages only when something crosses a threshold. Manage it in claude.ai under
+  scheduled tasks.
+
 ## Add to the org
 
 - New skill: copy a `SKILL.md`, keep "Use when ..." in `description`, add ≥ 2 examples, list it in an agent.

@@ -44,7 +44,13 @@ Last session: 2026-11-13, Claude Code (cloud), branch `claude/robin-v2-agent-spe
   action rules, taint, scoped grants via `robin approve`; `robin eval memory` P 0.88 / R 1.00 (ranking: m03, m04, m06
   return a neighbour too). 59 tests pass.
 
+- Cloud (eighth pass, D-015): session-start hook; gate as a Claude Code hook (connector writes only); scheduled
+  task "Robin daily knowledge scan" (trig_01AzNJUuJJGVkeULaiEib7cj, 06:06 Asia/Ho_Chi_Minh, fresh session, web only,
+  pushes to robin/knowledge-updates). Gate fix: connector-prefixed reads (slack_read_*, notion-search) and PostHog
+  exec reads. 64 tests pass.
+
 ## In progress → next concrete step
+- Check the first scheduled run's result (session from fire_trigger on 2026-11-14).
 - To try routines: `robin routines enable knowledge-scan` then `robin routines run knowledge-scan` (needs model access).
 - After live runs: `robin feedback <task> --edit corrected.md` on real answers, then `robin learn` weekly.
 - David tests: `robin doctor` → set ANTHROPIC_API_KEY in .env → `robin ask "..."` on 4 active departments.

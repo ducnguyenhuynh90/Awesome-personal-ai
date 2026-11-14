@@ -100,3 +100,12 @@ Format: date · decision · why · alternatives rejected · who. Do not re-open 
   by evals/memory (synthetic fixture; baseline P 0.88, R 1.00).
 - Why: Meta Muse (Sentinel, taint), OpenAI dots (action behaviours, always-human list), Grok Bot (approval memory).
 - Who: David ("go all").
+
+## D-015 · 2026-11-14 · Run on Claude Code cloud
+- Decision: (1) a SessionStart hook installs Robin in cloud sessions; (2) the approval gate also runs as a Claude
+  Code PreToolUse/PostToolUse hook, scoped to company connector tools (session id = task id; reads and repo work
+  untouched; infrastructure and GitHub tools exempt); (3) a cloud scheduled task runs the daily knowledge scan in a
+  fresh session (web only, no connectors), pushing knowledge to `robin/knowledge-updates`.
+- Why: David wants Robin on cloud Claude; Claude itself is the model there, so no API key or VM is needed for
+  interactive use or the daily routine.
+- Who: David ("all three").
