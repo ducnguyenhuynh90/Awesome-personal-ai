@@ -20,6 +20,7 @@ mcp:
   posthog:
     enabled: false
     send: false
+    read_actions: [exec]   # PostHog's one generic tool: a read unless its command names a write
     used_by: [data-analyst]
     server: {type: http, url: "${POSTHOG_MCP_URL}", headers: {Authorization: "Bearer ${POSTHOG_API_KEY}"}}
   notion:

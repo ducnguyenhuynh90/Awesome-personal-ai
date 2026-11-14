@@ -40,7 +40,9 @@ LOCAL_WRITE_ALLOWED = ["work/*", "outbox/*"]
 INTERNAL_PREFIXES = ("mcp__kb__",)
 
 # MCP tools whose verb is read-only. Anything else under mcp__ is a write.
-MCP_READ_VERBS = ("get", "list", "search", "read", "fetch", "query", "find", "describe", "view", "retrieve")
+MCP_READ_VERBS = ("get", "list", "search", "read", "fetch", "query", "find", "describe", "view", "retrieve", "download")
+# Generic command tools (e.g. PostHog `exec`) count as reads unless the command names a write.
+WRITE_WORDS = re.compile(r"\b(create|update|delete|remove|patch|post|send|set|add|edit|write|archive|enable|disable)\b", re.I)
 
 # Bash: allow a small read-only set; everything else needs approval.
 BASH_READ_ONLY = ("ls ", "cat ", "head ", "tail ", "wc ", "grep ", "rg ", "jq ", "git log", "git show", "git diff --stat", "robin kb query", "robin kb stale", "robin route")
@@ -94,7 +96,16 @@ def is_tainted(task_id: str | None) -> bool:
 # ---------- config ----------
 
 def _action(tool: str) -> str:
-    return tool.split("__")[-1] if tool.startswith("mcp__") else tool
+    """Action name without the connector prefix: mcp__Slack__slack_read_channel -> read_channel."""
+    if not tool.startswith("mcp__"):
+        return tool
+    parts = tool.split("__")
+    action = parts[-1]
+    conn = parts[1].lower() if len(parts) >= 3 else ""
+    for sep in ("_", "-"):
+        if conn and action.lower().startswith(conn + sep):
+            return action[len(conn) + 1:]
+    return action
 
 
 def _connector(tool: str) -> str | None:
@@ -123,8 +134,21 @@ def _behaviour(tool: str) -> str:
     return "ask"
 
 
-def _is_mcp_read(tool: str) -> bool:
-    return _action(tool).lower().startswith(MCP_READ_VERBS)
+def _read_actions() -> dict[str, set[str]]:
+    if not INTEGRATIONS_FILE.exists():
+        return {}
+    mcp = (yaml.safe_load(INTEGRATIONS_FILE.read_text()) or {}).get("mcp") or {}
+    return {n.lower(): {a.lower() for a in (i.get("read_actions") or [])} for n, i in mcp.items()}
+
+
+def _is_mcp_read(tool: str, tool_input: dict | None = None) -> bool:
+    action = _action(tool).lower()
+    if action.startswith(MCP_READ_VERBS):
+        return True
+    conn = _connector(tool)
+    if conn and action in _read_actions().get(conn, set()):
+        return not WRITE_WORDS.search(json.dumps(tool_input or {}))
+    return False
 
 
 # ---------- grants ----------
@@ -220,21 +244,21 @@ def decide(tool: str, tool_input: dict, task_id: str | None = None, cwd: Path = 
 
 
 def _is_read(tool: str, tool_input: dict, cwd: Path) -> bool:
-    return tool in READ_ONLY_TOOLS or tool.startswith(INTERNAL_PREFIXES) or (tool.startswith("mcp__") and _is_mcp_read(tool))
+    return tool in READ_ONLY_TOOLS or tool.startswith(INTERNAL_PREFIXES) or (tool.startswith("mcp__") and _is_mcp_read(tool, tool_input))
 
 
 def _decide(tool: str, tool_input: dict, task_id: str | None, cwd: Path) -> tuple[str, str]:
     action = _action(tool)
-    if tool.startswith("mcp__") and not _is_mcp_read(tool) and HARD_HANDOFF.search(action):
+    if tool.startswith("mcp__") and not _is_mcp_read(tool, tool_input) and HARD_HANDOFF.search(action):
         return "deny", f"'{tool}' is a hand-off action (money, credentials, permissions, deploy, delete, publish): David does it himself."
     conn = _connector(tool)
-    if conn and conn in _read_only_connectors() and not _is_mcp_read(tool):
+    if conn and conn in _read_only_connectors() and not _is_mcp_read(tool, tool_input):
         return "deny", f"connector '{conn}' is read-only (send: false in config/integrations.yaml)."
     if tool in READ_ONLY_TOOLS:
         return "allow", "read-only tool"
     if tool.startswith(INTERNAL_PREFIXES):
         return "allow", "internal knowledge tool (locked writer, secret redaction, lint)"
-    if tool.startswith("mcp__") and _is_mcp_read(tool):
+    if tool.startswith("mcp__") and _is_mcp_read(tool, tool_input):
         return "allow", "read-only MCP tool"
     st = _state(task_id)
     if st.get("denials", 0) >= BREAKER_LIMIT:
