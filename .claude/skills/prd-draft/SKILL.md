@@ -28,7 +28,7 @@ Drafts a lean PRD: problem, users, scope, requirements, metrics, risks.
 2. Users and jobs-to-be-done; in scope / out of scope.
 3. Requirements as numbered, testable statements; edge cases; market-specific rules.
 4. Success metric + guardrails; tracking events needed.
-5. Save to outbox/; ticket creation is done by Luffy/Zoro, not here.
+5. Save to outbox/; ticket creation is done by the ticketing agents, not here.
 
 ## Output
 

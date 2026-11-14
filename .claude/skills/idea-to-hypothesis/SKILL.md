@@ -44,3 +44,4 @@ Problem · Evidence · Hypothesis · Experiment (variant, audience, metric, guar
 
 - Hypotheses with no metric or no baseline.
 - Running a test too small to detect the expected change.
+- Long chat replies: put the full design in outbox/ and reply with the hypothesis line, the primary metric and the questions for David (learned 2026-11-13 smoke test).

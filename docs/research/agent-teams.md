@@ -41,3 +41,46 @@ UNVERIFIED: the ACE paper authors' official repo; Letta details beyond its short
 1. Persona bloat: one owner per capability; overlapping descriptions get merged.
 2. Loading every agent's full prompt at startup (agent-dispatch cites ~211k tokens for 130 agents).
 3. Framework lock-in: files are the source of truth; the orchestration layer is ~150 lines.
+
+## Meta Muse and xAI Grok Bot (2026-11-13)
+
+Both are closed products; patterns were read from open analogues and public notes: nano-muse/nanoMuse (3.4k★),
+unicodef1wn/grokbot-field-notes (705★), nickvasilescu/grokbot-clone (191★). Primary vendor pages were not reachable
+from the build session; Sentinel details are from press coverage (UNVERIFIED).
+
+| Pattern | From | Adopted as |
+|---|---|---|
+| One agent, one job; description states owns / tools / source of truth / approvals | Grok Bot | agent contract fields, validated |
+| Prefer a new skill over a new agent | Grok Bot | rule in every agent's "Verify before done" |
+| Correction → principle, never the story; overfit test | Grok Bot field notes | `robin learn` overfit check |
+| Self-improvement capped (≤ 1 suggestion/week) | Grok Bot | weekly cap in `robin learn` |
+| `stay_silent` outcome | grokbot-clone | `SILENT` reply, logged not delivered |
+| Proof attached; 2 failed attempts = stop | Grok Bot | "Verify before done" section |
+| Readable, editable memory + forget | nanoMuse / Muse | `robin profile/remember/forget` |
+| Separate guard agent; read/send split; allow once/always | Muse Sentinel, grokbot-clone | proposal (guard/ is David's) |
+| Autonomy ladder investigate → draft → autopilot | Grok Bot | `metadata.autonomy` per agent |
+
+## Deep dive: Meta Muse, xAI Grok Bot, OpenAI dots (2026-11-13, second pass)
+
+Vendor sites (about.fb.com, ai.meta.com, x.ai, docs.x.ai, openai.com, help.openai.com) were blocked from the build
+session; findings come from GitHub (nanoMuse, awesome-muse, grokbot-field-notes, grokbot-clone source,
+awesome-dots, dots-second-brain, dots-vs-grok-bot paper) and search summaries of vendor posts.
+"Verified" = vendor post via search summary or 2+ independent sources.
+
+| Finding | Product | Status | Robin |
+|---|---|---|---|
+| Sentinel: separate agent approves all egress; surrogate credentials swapped at the boundary | Muse | verified | gate proposal |
+| Taint: a process that read untrusted data loses auto-allow | Muse | verified | gate proposal (item 1) |
+| Grants once / session / task / time-limited, exact match | Muse | unverified | gate proposal (item 3) |
+| Background goals, "Ideas" from goals + history, agent decides if a result is worth a notification | Muse | unverified | routines + SILENT |
+| Per-action rules: auto / when told / ask / hand off; money and passwords always human | dots | verified | gate proposal (item 2) |
+| Proactive research is read-only | dots | verified | **built**: proactive mode |
+| Typed schedules: what, when + tz + end date, notify-if, deliver-to | dots | verified | **built**: config/routines.yaml |
+| No per-memory delete; learning survives disconnecting an app | dots | verified (weakness) | **built**: provenance + forget --source |
+| Routines: one owner, event > schedule, run history, report failure instead of stale data, run limits | Grok Bot | verified | **built**: contract + run log |
+| Long history in routines = biggest cost | Grok Bot | verified | proactive prompt is fresh per run |
+| Check-in: digest in code, then one message or stay_silent; skip if user active | Grok clone | unverified | **built**: robin checkin (zero tokens when silent) |
+| Handoffs with exact ids; debates ≤ 3 agents told to disagree | Grok field notes | unverified | **built**: handoff contract |
+| Skills shared across bots, memory per bot | Grok Bot | verified | already: skills shared, knowledge base shared |
+
+Not copied: Muse's hourly per-person profile pages (privacy; conflicts with HR rules).

@@ -13,6 +13,12 @@ metadata:
   - channel
   - go-to-market
   - gtm
+  - bonus
+  - welcome bonus
+  - offer
+  - design
+  - beat
+  - counter
   examples:
   - Brief a Christmas deposit-bonus campaign for PH
   - Plan the go-to-market for our CRM product launch

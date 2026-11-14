@@ -1,0 +1,7 @@
+# Which departments the router may send work to. Others stay in .claude/agents/ but are inactive.
+# Activate one by adding its department name here, then run `robin eval routing`.
+active_departments:
+  - product
+  - market-research
+  - data
+  - marketing

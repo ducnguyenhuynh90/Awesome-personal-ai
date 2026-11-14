@@ -31,6 +31,70 @@ def _config(name: str) -> dict:
     return yaml.safe_load((ROOT / "config" / name).read_text(encoding="utf-8")) or {}
 
 
+WORD_CAP = 120
+OUTBOX = ROOT / "outbox"
+
+
+def _words(text: str) -> int:
+    return len(re.findall(r"\S+", text))
+
+
+def _hard_trim(text: str, link: str, cap: int = WORD_CAP) -> str:
+    """Deterministic fallback: keep whole lines from the top until the cap, then link the full answer."""
+    budget = cap - _words(link) - 1
+    kept, used = [], 0
+    for line in text.splitlines():
+        n = _words(line)
+        if used + n > budget:
+            break
+        kept.append(line)
+        used += n
+    if not kept:  # first line alone is too long: cut it by words
+        kept = [" ".join(text.split()[:budget])]
+    return "\n".join(kept).rstrip() + "\n" + link
+
+
+async def enforce_cap(output: str, task_id: str, shorten=None, cap: int = WORD_CAP) -> tuple[str, dict]:
+    """Spec §6 'revise <= 1' for brevity: save the full answer to outbox/, then shorten once.
+
+    Prompt rules alone did not hold the cap in the 2026-11-13 smoke test (3 of 4 agents over), so the
+    cap is enforced in code. `shorten` is an async fn(text, cap, link) -> str (a cheap-model rewrite);
+    if it is missing, fails, or is still over the cap, a deterministic trim guarantees the cap.
+    """
+    if _words(output) <= cap:
+        return output, {"capped": False}
+    OUTBOX.mkdir(exist_ok=True)
+    full = OUTBOX / f"{task_id}-full.md"
+    full.write_text(output, encoding="utf-8")
+    link = f"Full answer: outbox/{full.name}"
+    short, how = None, "trim"
+    if shorten is not None:
+        try:
+            short = await shorten(output, cap, link)
+            how = "rewrite"
+        except Exception:  # noqa: BLE001 - any failure falls back to the deterministic trim
+            short = None
+    if not short or _words(short) > cap or link not in short:
+        short, how = _hard_trim(short or output, link, cap), "trim"
+    return short, {"capped": True, "method": how, "full": str(full.relative_to(ROOT)),
+                   "words_before": _words(output), "words_after": _words(short)}
+
+
+async def _cheap_shorten(text: str, cap: int, link: str) -> str:
+    from claude_agent_sdk import ClaudeAgentOptions, ResultMessage, query
+    models = _config("models.yaml")
+    prompt = (f"Rewrite the answer below to at most {cap - 15} words. Keep line 1 (the answer or decision), "
+              f"keep only the evidence that supports it (number + source) and any question for David. "
+              f"Drop tables, caveats and detail. End with this exact line: {link}\n\n<answer>\n{text}\n</answer>")
+    out = ""
+    opts = ClaudeAgentOptions(model=models["tiers"]["cheap"], allowed_tools=[], max_turns=1,
+                              system_prompt="You shorten text. Output only the rewritten answer.")
+    async for m in query(prompt=prompt, options=opts):
+        if isinstance(m, ResultMessage):
+            out = m.result or ""
+    return out.strip()
+
+
 def system_prompt() -> str:
     core = (ROOT / "harness" / "context" / "core.md").read_text(encoding="utf-8")
     contract = (
@@ -45,7 +109,36 @@ def system_prompt() -> str:
         "across several and merge their results. Every deliverable with a number or a recommendation goes "
         "to the 'reviewer' agent before you deliver it; fix only the issues it lists, once."
     )
-    return "\n\n".join([untrusted.SYSTEM_RULE, contract, roles, core])
+    # Company context stays out of the public repo: on the VM, put a local copy (e.g. exported from the
+    # company-context / team-context skills) in harness/private/*.md — gitignored, loaded here if present.
+    from robin import integrations
+    private = sorted((ROOT / "harness" / "private").glob("*.md")) if integrations.company_context_enabled() else []
+    company = "\n\n".join(f.read_text(encoding="utf-8") for f in private)
+    from robin import profile
+    prefs = profile.read()
+    parts = [untrusted.SYSTEM_RULE, contract, roles, core] + ([company] if company else []) + \
+            ([f"<owner_profile>\n{prefs}\n</owner_profile>"] if prefs else [])
+    return "\n\n".join(parts)
+
+
+UNTRUSTED_TOOLS = {"WebFetch", "WebSearch"}
+
+
+def taint_source(tool: str, tool_input: dict) -> str:
+    """Which reads make a task tainted (Meta Muse): web, any outside connector, raw source excerpts."""
+    if tool in UNTRUSTED_TOOLS:
+        return tool
+    if tool.startswith("mcp__") and not tool.startswith("mcp__kb__"):
+        return tool
+    if tool == "Read":
+        path = Path(str(tool_input.get("file_path", "")))
+        try:
+            rel = path.resolve().relative_to(ROOT.resolve()).as_posix()
+        except ValueError:
+            return f"Read outside repo: {path.name}"
+        if rel.startswith(("knowledge/_sources/", "outbox/", "evals/process/fixtures/")):
+            return f"Read {rel}"
+    return ""
 
 
 def _post_tool_hook(task_id: str, findings: list):
@@ -54,8 +147,11 @@ def _post_tool_hook(task_id: str, findings: list):
         response = input_data.get("tool_response")
         text = response if isinstance(response, str) else str(response)
         hits = secret_scanner.scan(text)
+        tainted_by = taint_source(tool, input_data.get("tool_input") or {})
+        if tainted_by:
+            approval_gate.mark_tainted(task_id, tainted_by)
         trace.log(task_id, "tool", tool=tool, tool_use_id=tool_use_id, chars=len(text),
-                  secrets=[h.kind for h in hits])
+                  secrets=[h.kind for h in hits], tainted_by=tainted_by)
         if hits:
             findings.extend((tool, h.kind) for h in hits)
         out = {"hookEventName": "PostToolUse"}
@@ -85,10 +181,14 @@ def build_prompt(request: str, router: Router) -> tuple[str, dict]:
     return "\n\n".join(parts), meta
 
 
-async def run(request: str, task_id: str | None = None) -> dict:
+async def run(request: str, task_id: str | None = None, proactive: bool = False) -> dict:
+    """proactive=True (routines): no external tools are loaded and shell/edit tools are disabled, so the run
+    is read-only by construction; it may only draft to outbox/ and update the knowledge base."""
     from claude_agent_sdk import (AssistantMessage, ClaudeAgentOptions, HookMatcher, ResultMessage,
                                   ToolUseBlock, query)
 
+    from robin import integrations
+    integrations.load_env_file()
     task_id = task_id or trace.new_task_id()
     limits = _config("limits.yaml")
     models = _config("models.yaml")
@@ -97,14 +197,16 @@ async def run(request: str, task_id: str | None = None) -> dict:
 
     router = Router()
     prompt, route_meta = build_prompt(request, router)
-    trace.log(task_id, "intake", request=request, route=route_meta)
+    trace.log(task_id, "intake", request=request, route=route_meta,
+              tools=sorted(integrations.mcp_servers()))
 
     findings: list = []
     options = ClaudeAgentOptions(
         system_prompt=system_prompt(),
         model=models["tiers"]["executor"],
         setting_sources=["project"],
-        mcp_servers={"kb": build_kb_server()},
+        mcp_servers={"kb": build_kb_server(), **({} if proactive else integrations.mcp_servers())},
+        disallowed_tools=["Bash", "Edit", "NotebookEdit"] if proactive else [],
         cwd=str(ROOT),
         max_budget_usd=float(limits["per_task_usd"]),
         max_turns=int(limits.get("max_turns", 30)),
@@ -126,15 +228,31 @@ async def run(request: str, task_id: str | None = None) -> dict:
             usage = message.usage or {}
 
     output, out_hits = secret_scanner.redact(output)
-    words = len(re.findall(r"\S+", output))
+    # stay_silent (Grok Bot pattern): "SILENT ..." means nothing worth sending; logged, never delivered.
+    failed = proactive and output.strip().upper().startswith("FAILED")
+    if failed:
+        trace.log(task_id, "result", output=output, failed=True, cost_usd=cost, usage=usage, tools=tools_used)
+        return {"task": task_id, "output": "", "failed": True, "reason": output.strip()[6:].strip(" :-—"),
+                "cost_usd": cost, "words": 0, "tools": tools_used, "route": route_meta, "secret_findings": findings}
+    silent = output.strip().upper().startswith("SILENT")
+    if silent:
+        trace.log(task_id, "result", output=output, silent=True, cost_usd=cost, usage=usage, tools=tools_used)
+        return {"task": task_id, "output": "", "silent": True, "reason": output.strip()[6:].strip(" :-—"),
+                "cost_usd": cost, "words": 0, "tools": tools_used, "route": route_meta, "secret_findings": findings}
+    cap = int(limits.get("reply_word_cap", WORD_CAP))
+    top_skill = router.skills.get(route_meta["skills"][0]) if route_meta["skills"] else None
+    if top_skill and top_skill.word_cap:
+        cap = int(top_skill.word_cap)
+    output, cap_info = await enforce_cap(output, task_id, shorten=_cheap_shorten, cap=cap)
+    words = _words(output)
     cache_read = int(usage.get("cache_read_input_tokens") or 0)
     total_in = cache_read + int(usage.get("input_tokens") or 0) + int(usage.get("cache_creation_input_tokens") or 0)
     trace.log(task_id, "result", output=output, words=words, cost_usd=cost, usage=usage,
-              cache_hit=round(cache_read / total_in, 3) if total_in else None, tools=tools_used,
+              cache_hit=round(cache_read / total_in, 3) if total_in else None, tools=tools_used, cap=cap_info,
               secrets_in_tools=[k for _, k in findings], secrets_in_output=[h.kind for h in out_hits])
     return {"task": task_id, "output": output, "cost_usd": cost, "words": words, "tools": tools_used,
             "route": route_meta, "secret_findings": findings + [("output", h.kind) for h in out_hits]}
 
 
-def run_sync(request: str) -> dict:
-    return asyncio.run(run(request))
+def run_sync(request: str, proactive: bool = False) -> dict:
+    return asyncio.run(run(request, proactive=proactive))

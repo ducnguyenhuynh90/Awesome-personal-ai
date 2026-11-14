@@ -1,0 +1,49 @@
+# Scheduled and event-triggered routines (Grok Bot routine contract + OpenAI dots typed schedules).
+# All are OFF until enabled. Every routine runs in PROACTIVE mode: read-only tools only, drafts to outbox/,
+# and it replies SILENT unless `notify_if` is met. `robin validate` checks this file; `robin routines` lists runs.
+#
+# Fields (all required):
+#   owner          agent that runs it (one owner per routine)
+#   trigger        {cron: "m h dom mon dow", tz: Area/City}  or  {event: <source.event>}  (events preferred)
+#   ask            the request the owner runs
+#   notify_if      the threshold that justifies a message; otherwise SILENT
+#   deliver_to     outbox | brief          (brief = goes into the next daily brief, never a direct message)
+#   max_runs_per_day, end_date (YYYY-MM-DD or null)
+#   on_empty       silent                  (fixed: nothing new = no message)
+#   on_source_down report_failure          (fixed: never fall back to old data)
+#   enabled        false until David turns it on
+
+routines:
+  knowledge-scan:
+    enabled: false
+    owner: research-lead
+    trigger: {cron: "30 6 * * *", tz: Asia/Ho_Chi_Minh}
+    ask: "Scan regulator, payments and competitor sources for the priority markets; update the knowledge base."
+    notify_if: "a new A/B-graded fact changes a decision or a goal metric"
+    deliver_to: brief
+    max_runs_per_day: 1
+    end_date: null
+    on_empty: silent
+    on_source_down: report_failure
+  goal-check:
+    enabled: false
+    owner: exec-strategy
+    trigger: {cron: "0 8 * * 1", tz: Asia/Ho_Chi_Minh}
+    ask: "Check each goal in harness/goals.md: metric now vs target."
+    notify_if: "a goal moves to at-risk or off-track"
+    deliver_to: brief
+    max_runs_per_day: 1
+    end_date: null
+    on_empty: silent
+    on_source_down: report_failure
+  stale-knowledge:
+    enabled: false
+    owner: research-lead
+    trigger: {cron: "0 7 * * 5", tz: Asia/Ho_Chi_Minh}
+    ask: "Refresh the 3 most important stale or conflicting knowledge nodes (robin kb stale)."
+    notify_if: "a refreshed fact contradicts what we believed"
+    deliver_to: brief
+    max_runs_per_day: 1
+    end_date: null
+    on_empty: silent
+    on_source_down: report_failure

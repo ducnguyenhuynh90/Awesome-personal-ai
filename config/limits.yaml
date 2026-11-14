@@ -3,8 +3,11 @@ daily_usd: 15
 per_task_usd: 1.50
 per_task_tokens: 400000
 max_turns: 30
+# Chat reply cap in words (spec §6.1, #BeClear). Detail goes to outbox/. A skill may set metadata.word_cap
+# (research skills: 250 = one screen).
+reply_word_cap: 120
 autonomous_tasks_per_day: 5
 security:
   # Command run (with JSON on stdin: kind, location, author) when the secret scanner finds a secret.
-  # Set by the operator to S5's Security/IT reporting process. Empty = only tell David.
+  # Set by the operator to the company's Security/IT reporting process. Empty = only tell David.
   report_command: ""

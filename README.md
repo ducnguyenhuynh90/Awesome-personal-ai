@@ -24,7 +24,7 @@ ask ─► chief-of-staff ─► department agent(s) ─► skill ─► reviewe
 | `guard/` | approval gate (default deny), untrusted wrapper, secret scanner — David-owned |
 | `robin/` | router, registry, orchestrator, knowledge tools, traces, CLI |
 | `evals/` | routing eval (offline) + process evals (live) |
-| `docs/` | spec v2, research on agent-team frameworks |
+| `docs/` | research on agent-team frameworks, proposals (spec and company config are local: `harness/private/`) |
 
 ## Quick start
 
@@ -42,6 +42,46 @@ robin trace <task-id>
 Install the pre-commit hook: `ln -s ../../scripts/pre-commit .git/hooks/pre-commit`.
 
 Interactive use: open the repo in Claude Code — the same agents and skills load from `.claude/`.
+
+## Test it first (no company data, no tool keys)
+
+```bash
+pip install -e '.[dev]'
+robin doctor                                   # what works now, what is missing (never prints keys)
+robin ask --dry-run "Why did FTD drop in Mexico?"   # routing + prompt, no model call, no cost
+robin eval routing && python -m pytest -q      # offline checks
+cp .env.example .env                           # then set only ANTHROPIC_API_KEY (or run `claude` to log in)
+robin ask "Write 5 push variants to win back lapsed depositors"   # first live answer
+```
+
+Without tools or company context, agents still work: they answer from the web and the knowledge base, and say
+"no access" instead of guessing when a task needs data they cannot reach.
+
+## Add keys or tools later
+
+1. Put the keys in `.env` (gitignored). Variable names are in `.env.example`.
+2. `robin tools enable posthog` (or notion, gmail, calendar, bigquery, github). A tool loads only when it is
+   enabled **and** its keys are set; otherwise it is skipped.
+3. `robin doctor` to confirm it shows `ready`.
+4. New tool: copy a block in `config/integrations.yaml` (http `url` or stdio `command`), write keys as `${VAR}`.
+5. Company context: drop `.md` files in `harness/private/` (gitignored), then `robin tools enable company_context`.
+
+Write tools stay blocked by the approval gate even when a tool is enabled. To let an agent do one write:
+`robin approve <task-id> <tool> [--scope once|task|until:YYYY-MM-DD] [--match channel=C123]`. Money, credentials,
+permissions, deploys, deletes and publishing can never be approved for an agent. Standing rules live in
+`config/action_rules.yaml` (auto | when_told | ask | handoff); `send: false` makes a connector read-only.
+
+## Run on Claude Code cloud (claude.ai/code)
+
+- Open the repo in a cloud session: `.claude/hooks/session-start.sh` installs Robin, and the agents and skills in
+  `.claude/` load automatically. Ask the chief of staff or a department agent directly; no API key needed.
+- Safety in cloud sessions: `guard/claude_code_hook.py` (registered in `.claude/settings.json`) sends every company
+  connector write (Slack, Gmail, Notion, Drive, ...) through the approval gate, with the session id as task id.
+  Reads and repo work are untouched. Approve one write: `robin approve <session-id> <tool>`.
+- Daily routine: a cloud scheduled task "Robin daily knowledge scan" runs at 06:06 (Asia/Ho_Chi_Minh) in a fresh
+  session: knowledge-scan as research-lead, web only, knowledge commits to branch `robin/knowledge-updates`,
+  then `robin checkin`; it messages only when something crosses a threshold. Manage it in claude.ai under
+  scheduled tasks.
 
 ## Add to the org
 

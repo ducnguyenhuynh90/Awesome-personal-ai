@@ -62,7 +62,7 @@ def test_lint_catches_bad_edge_and_link(kb):
 
 def test_lint_catches_bad_fact_line(kb):
     path = kb["lint"].KB / "markets" / "market-th.md"
-    path.write_text(path.read_text().replace("## Facts\n", "## Facts\n- TH uses phone login\n"))
+    path.write_text(path.read_text().replace("## Facts\n", "## Facts\n- uses phone login\n"))
     assert any("fact must be" in e for e in kb["lint"].lint())
 
 

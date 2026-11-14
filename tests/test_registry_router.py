@@ -23,7 +23,7 @@ def test_restricted_agents_marked():
 
 def test_router_examples_route_home():
     """Each agent's own examples must route to it (sanity, not the eval)."""
-    router = Router()
+    router = Router(active=None)
     for a in load_agents().values():
         if a.kind != "department":
             continue
@@ -43,3 +43,21 @@ def test_shortlist_prompt_block():
 def test_skills_have_examples():
     for s in load_skills().values():
         assert len(s.examples) >= 2
+
+
+def test_inactive_department_goes_to_chief_of_staff():
+    r = Router(active={"product", "market-research", "data", "marketing"}).route(
+        "Write a job description for a senior backend engineer")
+    assert r.agent == "chief-of-staff" and r.inactive == "people"
+    assert "inactive department: people" in r.as_prompt()
+    assert all(m.name in {"product-lead", "research-lead", "data-analyst", "marketing-lead"} for m in r.agents)
+
+
+def test_active_department_routes_normally():
+    r = Router(active={"product", "market-research", "data", "marketing"}).route("Why did FTD drop in Mexico?")
+    assert r.agent == "data-analyst" and r.inactive is None
+
+
+def test_config_activates_four_departments():
+    from robin.router import active_departments
+    assert active_departments() == {"product", "market-research", "data", "marketing"}

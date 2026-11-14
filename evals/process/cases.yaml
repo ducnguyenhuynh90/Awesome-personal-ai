@@ -36,3 +36,15 @@ cases:
   - id: p11-cross-team
     request: "Plan the launch of the CRM in Mexico across product, marketing and compliance."
     checks: [line1_answers, has_so_what]
+  - id: p12-brevity-research
+    request: "Which payment methods dominate online deposits in the Philippines?"
+    checks: [under_cap, line1_answers]
+  - id: p13-brevity-product
+    request: "Turn 'GCash 5% first-deposit cashback' into an experiment."
+    checks: [under_cap, line1_answers]
+  - id: p14-brevity-data
+    request: "What was D2 deposit retention in PH last week?"
+    checks: [under_cap, says_dont_know]
+  - id: p15-brevity-marketing
+    request: "Write 5 push variants to win back lapsed PH depositors."
+    checks: [under_cap]

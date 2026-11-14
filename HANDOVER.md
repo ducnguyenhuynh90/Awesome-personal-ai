@@ -9,7 +9,58 @@ Last session: 2026-11-13, Claude Code (cloud), branch `claude/robin-v2-agent-spe
 4. Guards work and are tested: approval gate (default deny), untrusted wrapper, secret scanner. 27 tests pass.
 5. Orchestrator (`robin ask`) is written against claude-agent-sdk 0.2.172 but has NOT run live: no Anthropic credentials in the build container.
 
+## Since then (2026-11-13, second pass)
+- David confirmed D-004 to D-006. Active departments = product, market research, data, marketing (D-011, config/org.yaml).
+- Router ranks all departments, then filters; asks for inactive departments go to chief-of-staff flagged `inactive`. 30 tests pass.
+- Live smoke test of the 4 agents: safe and honest, but all broke the 120-word cap; research cited unopened pages.
+  Fixes are proposed, not applied (`.claude/` and `evals/` are David's): docs/proposals/2026-11-13-first-four-departments.md.
+
+- David approved ("fix all"): proposal items 1–8 applied. Routing: focus 10/10, cases 53/54, holdout 17/18 (holdout never tuned).
+- Re-test after fixes: data-analyst now ~125 words with ONE definition question (was ~250); research opens sources and stops
+  when it can't (was citing snippets); marketing marks conditional variants. But research (~200), product (~280) and marketing
+  (~250) still exceeded 120 words → the cap is now enforced in code: `robin/orchestrator.py:enforce_cap` saves the full answer
+  to outbox/<task>-full.md, shortens once with the cheap model, and falls back to a deterministic trim. 33 tests pass.
+- Network policy of the cloud session blocked gmanetwork.com and philstar.com; research needs bsp.gov.ph, pagcor.ph, inquirer.net.
+
+- Company frameworks (third pass): read company-context + team-context skills. The repo is PUBLIC, so only methods
+  were added to 13 agents (#BeClear, #Context, #DontPassMessage, escalate with a recommendation, labelled assumptions,
+  Product's improvement loop / experiment gate / review depth, revenue-quality check). Company facts are read at
+  runtime from those skills (or gitignored harness/private/ on the VM). Reviewer changes: docs/proposals/2026-11-13-reviewer-company-checks.md.
+- Reply cap is now per skill: default 120 (config/limits.yaml reply_word_cap), research skills 250 (spec: one screen).
+
+- Optional tools/keys (fourth pass): config/integrations.yaml — everything OFF; keys only from env/.env (gitignored);
+  `robin doctor`, `robin tools list|enable|disable`, `robin ask --dry-run`. Company context is OFF (David: test first,
+  don't touch company info/keys yet). 39 tests pass.
+
+- Muse / Grok Bot patterns (fifth pass, D-012): agent contracts (validated), verify-before-done, SILENT outcome,
+  owner profile (gitignored) with remember/forget, learning loop `robin feedback` + `robin learn` (1 rule/week, overfit
+  check, proposals in docs/proposals/). Approval scopes = proposal (guard/ blocked). 43 tests pass.
+
+- Muse / Grok Bot / dots deep dive (sixth pass, D-013): routines (typed, read-only proactive mode, run log, limits,
+  silent slowdown) — all OFF; `robin checkin` (digest in code, zero tokens when silent); handoff contract; profile
+  provenance + forget --source. Gate + memory eval = docs/proposals/2026-11-13-approval-scopes.md. 49 tests pass.
+
+- Gate v2 + memory eval (seventh pass, D-014, David "go all"): hand-off list, read-only connectors, breaker,
+  action rules, taint, scoped grants via `robin approve`; `robin eval memory` P 0.88 / R 1.00 (ranking: m03, m04, m06
+  return a neighbour too). 59 tests pass.
+
+- Cloud (eighth pass, D-015): session-start hook; gate as a Claude Code hook (connector writes only); scheduled
+  task "Robin daily knowledge scan" (trig_01AzNJUuJJGVkeULaiEib7cj, 06:06 Asia/Ho_Chi_Minh, fresh session, web only,
+  pushes to robin/knowledge-updates). Gate fix: connector-prefixed reads (slack_read_*, notion-search) and PostHog
+  exec reads. 64 tests pass.
+
 ## In progress → next concrete step
+- Check the first scheduled run's result (session from fire_trigger on 2026-11-14).
+- To try routines: `robin routines enable knowledge-scan` then `robin routines run knowledge-scan` (needs model access).
+- After live runs: `robin feedback <task> --edit corrected.md` on real answers, then `robin learn` weekly.
+- David tests: `robin doctor` → set ANTHROPIC_API_KEY in .env → `robin ask "..."` on 4 active departments.
+- Repo made company-neutral (commit ce69563): spec, company unit file and company config live in gitignored
+  harness/private/ (local only — keep a copy outside this container). Old commits still hold them: making the GitHub
+  repo private (owner action in GitHub settings) or an approved force-push is needed to remove them from history.
+- Reviewer company checks applied (David: "go reviewer", 2026-11-13).
+- Router weakness (holdout, untuned): "weekly active users number for our payments app" routes to research, not data.
+- Live run on the VM: `robin eval process --only p12-brevity-research,p13-brevity-product,p14-brevity-data,p15-brevity-marketing`
+  to confirm the code-enforced cap with the real orchestrator (subagent tests here bypass the orchestrator).
 - Live P0 acceptance: on the VM with credentials, run `robin ask "<PH KYC question>"`, then `robin eval process`; record cost here.
 - Seed PH knowledge: David gives 5 sourced facts → `robin kb add-source` + `add-fact` for each.
 - Slack DM listener + daemon/scheduler (spec §4 B/C) — not started.
@@ -19,8 +70,8 @@ Last session: 2026-11-13, Claude Code (cloud), branch `claude/robin-v2-agent-spe
 - Anthropic credentials and Slack app tokens on the VM.
 
 ## Open questions for David
-1. Confirm DECISIONS D-004 → D-006 (fact format, supersede-not-delete, edge vocabulary).
-2. Which departments matter first beyond product/research/data? (All 12 exist; tune the top 3 with real asks.)
+1. Metric definitions (FTD, D2 deposit retention, LTV, CAC payback) — data-analyst is blocked without them.
+2. Approve docs/proposals/2026-11-13-first-four-departments.md.
 3. Fill `harness/goals.md` with Q4 goals — mode C (autonomous agenda) depends on it.
 
 ## Do NOT redo

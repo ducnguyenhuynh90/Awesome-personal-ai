@@ -1,0 +1,67 @@
+# Tools and keys Robin can use. Everything is OFF until you turn it on.
+#
+# - Never put a key in this file. Keys come from environment variables or a local `.env` file
+#   (gitignored; copy `.env.example`). Write `${VAR_NAME}` wherever a key or URL goes.
+# - Turn a tool on:  robin tools enable <name>     (or set enabled: true here)
+# - Check status:    robin doctor
+# - A tool only loads when enabled AND every variable it names is set. Otherwise it is skipped, and the
+#   agents say "no access" instead of guessing.
+# - Read-only by default: guard/approval_gate.py still blocks every write tool (send, post, create...)
+#   unless David approves that draft. `send: false` makes a connector read-only even with an approval.
+# - Company connectors need the AI Tool Request SOP before they are turned on.
+
+# Model access. Required for `robin ask`. One of these is enough.
+model:
+  any_of_env: [ANTHROPIC_API_KEY, ANTHROPIC_AUTH_TOKEN]
+  note: Or log in once with `claude` on this machine; the Agent SDK uses that login.
+
+# MCP servers (tools the agents call). Fill `url` or `command` with the server your company approved.
+mcp:
+  posthog:
+    enabled: false
+    send: false
+    read_actions: [exec]   # PostHog's one generic tool: a read unless its command names a write
+    used_by: [data-analyst]
+    server: {type: http, url: "${POSTHOG_MCP_URL}", headers: {Authorization: "Bearer ${POSTHOG_API_KEY}"}}
+  notion:
+    enabled: false
+    send: true
+    used_by: [all]
+    server: {type: http, url: "${NOTION_MCP_URL}", headers: {Authorization: "Bearer ${NOTION_TOKEN}"}}
+  gmail:
+    enabled: false
+    send: true
+    used_by: [chief-of-staff]
+    server: {type: http, url: "${GMAIL_MCP_URL}", headers: {Authorization: "Bearer ${GMAIL_TOKEN}"}}
+  calendar:
+    enabled: false
+    send: true
+    used_by: [chief-of-staff]
+    server: {type: http, url: "${CALENDAR_MCP_URL}", headers: {Authorization: "Bearer ${CALENDAR_TOKEN}"}}
+  bigquery:
+    enabled: false
+    send: false
+    used_by: [data-analyst]
+    server: {type: http, url: "${BIGQUERY_MCP_URL}", headers: {Authorization: "Bearer ${BIGQUERY_TOKEN}"}}
+  github:
+    enabled: false
+    send: true
+    used_by: [eng-lead]
+    server: {type: http, url: "${GITHUB_MCP_URL}", headers: {Authorization: "Bearer ${GITHUB_TOKEN}"}}
+  # Add your own: copy a block, rename it, set type http (url) or stdio (command + args + env).
+  # example_stdio:
+  #   enabled: false
+  #   server: {type: stdio, command: "npx", args: ["-y", "<package>"], env: {API_KEY: "${MY_KEY}"}}
+
+# Chat interfaces (not MCP). Built in a later phase; keys listed so `robin doctor` can check them.
+interfaces:
+  slack_dm:
+    enabled: false
+    env: [SLACK_BOT_TOKEN, SLACK_APP_TOKEN]
+    note: Socket Mode DM listener — not built yet (spec P0). Use `robin ask` until then.
+
+# Company context (strategy, priorities, metric definitions). Off = agents work without it and say so.
+company_context:
+  enabled: false
+  path: harness/private/
+  note: Put local .md files here (gitignored). Agents in Claude Code can also use the company-context skill.

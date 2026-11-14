@@ -8,7 +8,7 @@ cases:
   - {request: "Write three ad texts for Google search about fast withdrawals", agent: marketing-lead, skill: copy-variants}
   - {request: "Snapshot of the payments landscape in the Philippines", agent: research-lead, skill: market-scan}
   - {request: "Analyse the promotions page of our biggest competitor", agent: research-lead, skill: competitor-teardown}
-  - {request: "What is the weekly active users number for TinderPay?", agent: data-analyst, skill: metric-pull}
+  - {request: "What is the weekly active users number for our payments app?", agent: data-analyst, skill: metric-pull}
   - {request: "Why did churn spike in September?", agent: data-analyst, skill: metric-diagnosis}
   - {request: "Background check on a potential affiliate partner before we sign", agent: sales-bd-lead, skill: account-research}
   - {request: "Group these complaint emails into themes and flag urgent ones", agent: support-lead, skill: ticket-triage}

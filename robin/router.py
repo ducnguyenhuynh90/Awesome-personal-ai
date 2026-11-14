@@ -15,7 +15,20 @@ import re
 from collections import Counter
 from dataclasses import dataclass
 
-from robin.registry import Agent, Skill, load_agents, load_skills
+from pathlib import Path
+
+import yaml
+
+from robin.registry import ROOT, Agent, Skill, load_agents, load_skills
+
+
+def active_departments() -> set[str] | None:
+    """Departments the router may use (config/org.yaml). None = all."""
+    path = ROOT / "config" / "org.yaml"
+    if not path.exists():
+        return None
+    deps = (yaml.safe_load(path.read_text()) or {}).get("active_departments")
+    return set(deps) if deps else None
 
 STOP = set(
     "a an and are as at be by can do does for from get give how i in is it me my of on or our please "
@@ -125,9 +138,12 @@ class Route:
     agents: list[Match]
     skills: list[Match]
     confident: bool
+    inactive: str | None = None  # department the ask belongs to, when that department is not active
 
     @property
     def agent(self) -> str:
+        if self.inactive:
+            return "chief-of-staff"
         return self.agents[0].name if self.confident and self.agents else "chief-of-staff"
 
     def as_prompt(self) -> str:
@@ -135,7 +151,10 @@ class Route:
         lines = ["<routing_shortlist>"]
         lines.append("agents: " + ", ".join(f"{m.name} ({m.confidence:.2f})" for m in self.agents))
         lines.append("skills: " + ", ".join(f"{m.name} ({m.confidence:.2f})" for m in self.skills))
-        if not self.confident:
+        if self.inactive:
+            lines.append(f"inactive department: {self.inactive} — tell David it is not active yet; "
+                         "handle only what research-brief can, or ask him to activate it")
+        elif not self.confident:
             lines.append("low confidence: ask David one clarifying question or handle as chief-of-staff")
         lines.append("</routing_shortlist>")
         return "\n".join(lines)
@@ -143,10 +162,16 @@ class Route:
 
 class Router:
     def __init__(self, agents: dict[str, Agent] | None = None, skills: dict[str, Skill] | None = None,
-                 min_confidence: float = 0.35):
+                 min_confidence: float = 0.35, active: set[str] | None | bool = True):
+        """active=True reads config/org.yaml; a set limits to those departments; None/False = all departments."""
         self.agents = load_agents() if agents is None else agents
         self.skills = load_skills() if skills is None else skills
-        # Staff roles (chief-of-staff, reviewer) are never routed to by keywords.
+        if active is True:
+            active = active_departments()
+        self.active = set(active) if active else None
+        # Staff roles (chief-of-staff, reviewer) are never routed to by keywords. Inactive departments are skipped.
+        # Rank against ALL departments, then filter: an ask that belongs to an inactive department must not
+        # drift to the nearest active one.
         self._agent_names = [n for n, a in self.agents.items() if a.kind == "department"]
         self._skill_names = list(self.skills)
         self._skill_index = BM25([tokenize(self.skills[n].search_text()) for n in self._skill_names])
@@ -178,11 +203,22 @@ class Router:
             if owner:
                 best_owned[owner] = max(best_owned.get(owner, 0.0), sc)
         agent_scores = [s + best_owned.get(n, 0.0) for n, s in zip(self._agent_names, self._agent_index.score(q))]
-        agents = self._rank(self._agent_names, agent_scores, k_agents)
+        # Confidence is judged on the full catalogue (top-k normalised), before any active filter.
+        top = self._rank(self._agent_names, agent_scores, k_agents)
+        confident = bool(top) and top[0].confidence >= self.min_confidence and top[0].score >= 1.0
+        agents, inactive = top, None
+        if self.active is not None:
+            top_dept = self.agents[top[0].name].department if top else None
+            if confident and top_dept not in self.active:
+                inactive = top_dept
+            ok = [n for n in self._agent_names if self.agents[n].department in self.active]
+            ok_scores = [sc for n, sc in zip(self._agent_names, agent_scores) if n in ok]
+            agents = self._rank(ok, ok_scores, k_agents)
+            reachable = {k for n in ok for k in self.agents[n].skills}
+            skill_scores = [s if n in reachable else 0.0 for n, s in zip(self._skill_names, skill_scores)]
         # Boost skills owned by the top agent so the shortlist is coherent.
         if agents:
             owned = set(self.agents[agents[0].name].skills)
             skill_scores = [s * 1.3 if n in owned else s for n, s in zip(self._skill_names, skill_scores)]
         skills = self._rank(self._skill_names, skill_scores, k_skills)
-        confident = bool(agents) and agents[0].confidence >= self.min_confidence and agents[0].score >= 1.0
-        return Route(request, agents, skills, confident)
+        return Route(request, agents, skills, confident, inactive)

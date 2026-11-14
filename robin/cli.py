@@ -5,8 +5,16 @@
   robin validate                   check agent/skill files
   robin registry                   regenerate org/REGISTRY.md (compact catalogue)
   robin eval routing               routing accuracy on evals/routing/cases.yaml (free, offline)
-  robin ask "<request>"            run a task (needs Anthropic credentials)
+  robin ask "<request>"            run a task (needs Anthropic credentials); --dry-run needs none
+  robin doctor                     what works now, what is missing (never prints keys)
+  robin tools list|enable|disable NAME   optional tools/keys in config/integrations.yaml
   robin trace <task-id>            show a task's trace
+  robin feedback <task> --edit F | --down WHY   record David's correction
+  robin learn [--apply FILE]       one general rule per week from feedback
+  robin profile | remember "..." | forget "..."   owner profile (gitignored)
+  robin routines list|run|enable|disable NAME     scheduled routines (read-only, SILENT by default)
+  robin checkin                    digest in code: one message or silent, zero tokens when silent
+  robin approve TASK TOOL [--scope once|task|until:DATE] [--match k=v] [--standing]   grant one write
   robin kb lint|index|stale        knowledge checks / regenerate indexes / list stale nodes
   robin kb query [--near ID] [--hops N] [--market X] [--type T] [--text "..."]
   robin kb new ID TYPE "summary"   create a node
@@ -51,8 +59,9 @@ def cmd_skills(a):
 
 
 def cmd_validate(a):
-    from robin.registry import validate
-    errors = validate()
+    from robin import routines
+    from robin.registry import load_agents, validate
+    errors = validate() + routines.validate(set(load_agents()))
     _print(errors)
     print(f"registry: {'OK' if not errors else f'{len(errors)} problem(s)'}")
     return 1 if errors else 0
@@ -79,11 +88,20 @@ def cmd_eval(a):
     from robin.router import Router
     if a.suite == "process":
         return _eval_process(a)
+    if a.suite == "memory":
+        from evals.memory.run import run
+        res = run()
+        for r in res["rows"]:
+            if r["recall"] < 1 or r["precision"] < 1:
+                print(f"  {r['id']}: P={r['precision']:.2f} R={r['recall']:.2f} got={r['got']} want={r['expect']}")
+        print(f"memory eval: precision {res['precision']:.2f} · recall {res['recall']:.2f} · F1 {res['f1']:.2f}")
+        return 0 if res["recall"] >= 0.9 and res["precision"] >= 0.8 else 1
     if a.suite != "routing":
-        print("suites: routing (offline, free) | process (live, costs money)")
+        print("suites: routing | memory (offline, free) | process (live, costs money)")
         return 2
     cases = yaml.safe_load((ROOT / "evals" / "routing" / f"{a.set}.yaml").read_text())["cases"]
-    router = Router()
+    # focus set = active departments only (config/org.yaml); other sets measure the full catalogue.
+    router = Router(active=True if a.set == "focus" else None)
     ok_agent = ok_skill = 0
     misses = []
     for c in cases:
@@ -122,11 +140,152 @@ def _eval_process(a):
 
 
 def cmd_ask(a):
+    from robin import integrations
+    integrations.load_env_file()
+    if a.dry_run:
+        from robin.orchestrator import build_prompt, system_prompt
+        from robin.router import Router
+        prompt, meta = build_prompt(a.request, Router())
+        print(f"route: {meta['agent']} · skills {meta['skills'][:3]} · knowledge {meta['kb']}")
+        print(f"tools loaded: kb + {sorted(integrations.mcp_servers()) or 'none'}")
+        print(f"system prompt: {len(system_prompt().split())} words (cached prefix)\n")
+        print(prompt)
+        print("\n[dry run: no model call, no cost]")
+        return 0
+    if not integrations.model_status().ready:
+        print("No model access yet. Set ANTHROPIC_API_KEY in .env (copy .env.example) or run `claude` once to log in.\n"
+              "Try `robin ask --dry-run \"...\"` to see routing without a key. Full check: `robin doctor`.")
+        return 2
     from robin.orchestrator import run_sync
     res = run_sync(a.request)
+    if res.get("silent"):
+        print(f"(silent — nothing worth sending: {res.get('reason') or 'no reason given'})")
+        return 0
     print(res["output"])
     print(f"\n[{res['task']} · ${res.get('cost_usd', 0):.4f} · {res.get('words', 0)} words · route {res.get('route', {}).get('agent')}]",
           file=sys.stderr)
+
+
+def cmd_doctor(a):
+    """What works now, what is missing. Never prints key values."""
+    from robin import integrations
+    from robin.kb import lint
+    from robin.registry import validate
+    loaded = integrations.load_env_file()
+    print(f".env: {'loaded ' + ', '.join(loaded) if loaded else ('present' if integrations.ENV_FILE.exists() else 'none (optional; copy .env.example)')}")
+    for st in integrations.statuses():
+        print("  " + st.line())
+    from guard import approval_gate
+    standing = approval_gate.APPROVALS / "standing.json"
+    grants = (json.loads(standing.read_text()).get("grants", []) if standing.exists() else [])
+    print(f"standing grants: {', '.join(g['tool'] + ' ' + g['scope'] for g in grants) or 'none'}")
+    reg, kb = validate(), lint.lint()
+    print(f"registry: {'OK' if not reg else f'{len(reg)} problem(s)'} · knowledge: {'OK' if not kb else f'{len(kb)} problem(s)'}")
+    ready = integrations.model_status().ready
+    print("\nWorks now (no keys): robin route · robin eval routing · robin kb ... · robin ask --dry-run · pytest")
+    print("Live answers: " + ("ready — try robin ask \"...\"" if ready else "need model access (see above)"))
+    print("Add a tool later: put its keys in .env, then `robin tools enable <name>`.")
+    return 0
+
+
+def cmd_tools(a):
+    from robin import integrations
+    integrations.load_env_file()
+    if a.action == "list":
+        for st in integrations.statuses():
+            print(st.line())
+        return 0
+    print(integrations.set_enabled(a.name, a.action == "enable"))
+    st = next((x for x in integrations.statuses() if x.name == a.name), None)
+    if st and a.action == "enable" and st.missing:
+        print(f"note: still missing {', '.join(st.missing)} — add to .env; until then this tool is skipped")
+    return 0
+
+
+def cmd_profile(a):
+    from robin import profile
+    if a.action == "show":
+        print(profile.read() or f"no profile yet — `robin remember \"...\"` creates {profile.PROFILE.relative_to(ROOT)}")
+    elif a.action == "remember":
+        print("remembered:", profile.remember(a.text, source=a.source, status=a.status))
+    else:
+        removed = profile.forget(a.text or "", source=a.source if a.source != "david" else "")
+        print("\n".join(f"forgot: {r}" for r in removed) or "nothing matched")
+    return 0
+
+
+def cmd_feedback(a):
+    from robin import learn
+    corrected = Path(a.edit).read_text(encoding="utf-8") if a.edit else ""
+    kind = "edit" if a.edit else "down"
+    print(f"saved {kind} for {a.task_id} → {learn.record(a.task_id, kind, note=a.down or '', corrected=corrected).name}")
+    return 0
+
+
+def cmd_learn(a):
+    from robin import integrations, learn
+    if a.apply:
+        print(learn.apply(Path(a.apply)))
+        return 0
+    integrations.load_env_file()
+    if not integrations.model_status().ready:
+        print("learning needs model access (cheap tier). `robin doctor` shows what is missing.")
+        return 2
+    prop = learn.learn(learn.cheap_reflect)
+    print(f"proposal: {prop.path.relative_to(ROOT)}\n  {prop.target_kind} {prop.target}: {prop.rule}" if prop
+          else "nothing learned (no new signal, rule did not generalise, or this week's proposal is already made)")
+    return 0
+
+
+def cmd_routines(a):
+    from robin import integrations, routines
+    rs = routines.load()
+    if a.action == "list":
+        for name, r in rs.items():
+            last = (routines.runs(name) or [{}])[-1]
+            trig = r["trigger"].get("cron") or r["trigger"].get("event")
+            print(f"{name:18} {'on ' if r.get('enabled') else 'off'} owner={r['owner']:15} trigger={trig}  "
+                  f"last={last.get('status', '-')} {last.get('ts', '')}  silent_streak={routines.silent_streak(name)}")
+        return 0
+    if a.action in ("enable", "disable"):
+        from robin.integrations import set_enabled
+        print(set_enabled(a.name, a.action == "enable", routines.CONFIG))
+        return 0
+    if a.name not in rs:
+        print(f"no routine '{a.name}'"); return 2
+    ok, why = routines.can_run(a.name, rs[a.name])
+    if not ok and not a.force:
+        print(f"skipped: {why}"); routines.log_run(a.name, "skipped", why); return 0
+    integrations.load_env_file()
+    if not integrations.model_status().ready:
+        print("routine needs model access — robin doctor"); return 2
+    from robin.orchestrator import run_sync
+    res = run_sync(routines.proactive_prompt(a.name, rs[a.name]), proactive=True)
+    status = "failed" if res.get("failed") else "silent" if res.get("silent") else "succeeded"
+    routines.log_run(a.name, status, res.get("reason", ""), res["task"], res.get("cost_usd", 0))
+    print(f"{a.name}: {status}" + (f" — {res.get('reason')}" if res.get("reason") else "") +
+          (f"\n{res['output']}" if res.get("output") else ""))
+    return 0
+
+
+def cmd_checkin(a):
+    from robin import checkin
+    res = checkin.run()
+    print(res.get("message") or f"({res['status']}: {res.get('reason')})")
+    return 0
+
+
+def cmd_approve(a):
+    """David's only way to grant an agent a write (never called by agents)."""
+    from guard import approval_gate
+    match = dict(kv.split("=", 1) for kv in (a.match or []))
+    try:
+        path = approval_gate.approve(None if a.standing else a.task_id, a.tool, a.scope, match or None,
+                                     standing=a.standing)
+    except ValueError as e:
+        print(f"refused: {e}"); return 2
+    print(f"granted {a.tool} ({a.scope}{', ' + str(match) if match else ''}) → {path.relative_to(ROOT)}")
+    return 0
 
 
 def cmd_trace(a):
@@ -179,7 +338,38 @@ def main(argv=None) -> int:
     s.add_argument("--set", default="cases", help="cases (tuning set) or holdout")
     s.add_argument("--only", help="process eval ids, comma-separated")
     s.set_defaults(fn=cmd_eval)
-    s = sub.add_parser("ask"); s.add_argument("request"); s.set_defaults(fn=cmd_ask)
+    s = sub.add_parser("ask"); s.add_argument("request"); s.add_argument("--dry-run", action="store_true",
+        help="show routing, tools and prompt without calling the model"); s.set_defaults(fn=cmd_ask)
+    sub.add_parser("doctor", help="what works now and what is missing").set_defaults(fn=cmd_doctor)
+    s = sub.add_parser("approve", help="David grants an agent one write: robin approve TASK TOOL [--scope ...]")
+    s.add_argument("task_id", help="task id, or 'standing' with --standing"); s.add_argument("tool")
+    s.add_argument("--scope", default="once", help="once (default) | task | until:YYYY-MM-DD")
+    s.add_argument("--match", nargs="*", help="exact input match, e.g. channel=C123")
+    s.add_argument("--standing", action="store_true", help="standing grant across tasks (needs --scope until:DATE)")
+    s.set_defaults(fn=cmd_approve)
+    s = sub.add_parser("routines", help="list / run / enable / disable routines (config/routines.yaml)")
+    s.add_argument("action", choices=["list", "run", "enable", "disable"]); s.add_argument("name", nargs="?")
+    s.add_argument("--force", action="store_true", help="run even if limits say skip"); s.set_defaults(fn=cmd_routines)
+    sub.add_parser("checkin", help="digest built in code: one message or silent (no model call)").set_defaults(fn=cmd_checkin)
+    s = sub.add_parser("feedback", help="record David's correction (--edit FILE) or 👎 (--down WHY) for a task")
+    s.add_argument("task_id"); g = s.add_mutually_exclusive_group(required=True)
+    g.add_argument("--edit", help="file with David's corrected text"); g.add_argument("--down", help="why it was wrong")
+    s.set_defaults(fn=cmd_feedback)
+    s = sub.add_parser("learn", help="turn the best new feedback into one general rule (max 1/week)")
+    s.add_argument("--apply", help="apply a learning proposal file"); s.set_defaults(fn=cmd_learn)
+    for name, help_ in (("profile", "show the owner profile"), ("remember", "add a preference line"),
+                        ("forget", "remove preference lines containing TEXT")):
+        s = sub.add_parser(name, help=help_)
+        if name == "remember":
+            s.add_argument("text"); s.add_argument("--status", default="", help="open | done | planned")
+        if name == "forget":
+            s.add_argument("text", nargs="?")
+        if name != "profile":
+            s.add_argument("--source", default="david", help="where it was learned (david, slack, gmail, ...)")
+        s.set_defaults(fn=cmd_profile, action={"profile": "show"}.get(name, name))
+    s = sub.add_parser("tools", help="list / enable / disable optional tools")
+    s.add_argument("action", choices=["list", "enable", "disable"]); s.add_argument("name", nargs="?")
+    s.set_defaults(fn=cmd_tools)
     s = sub.add_parser("trace"); s.add_argument("task_id"); s.set_defaults(fn=cmd_trace)
 
     kb = sub.add_parser("kb"); kb.set_defaults(fn=cmd_kb)
