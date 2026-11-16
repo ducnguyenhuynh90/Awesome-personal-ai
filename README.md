@@ -43,6 +43,17 @@ Install the pre-commit hook: `ln -s ../../scripts/pre-commit .git/hooks/pre-comm
 
 Interactive use: open the repo in Claude Code — the same agents and skills load from `.claude/`.
 
+## Easiest start: the setup page
+
+```bash
+pip install -e '.[dev]'
+robin ui            # prints a private link like http://localhost:8765/?t=...
+```
+
+One page: setup checklist, paste your Anthropic key (saved to `.env`, never shown again), pick departments,
+switch tools and routines on or off, ask Robin, accept or reject answers. Runs only on your machine (localhost,
+one-time token). The claude.ai network allowlist is listed as a checklist step; the page cannot change it.
+
 ## Test it first (no company data, no tool keys)
 
 ```bash

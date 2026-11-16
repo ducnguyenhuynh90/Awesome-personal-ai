@@ -7,6 +7,7 @@
   robin eval routing               routing accuracy on evals/routing/cases.yaml (free, offline)
   robin ask "<request>"            run a task (needs Anthropic credentials); --dry-run needs none
   robin doctor                     what works now, what is missing (never prints keys)
+  robin ui [--port 8765]           local web page to set up and use Robin
   robin tools list|enable|disable NAME   optional tools/keys in config/integrations.yaml
   robin trace <task-id>            show a task's trace
   robin feedback <task> --edit F | --down WHY   record David's correction
@@ -335,6 +336,12 @@ def cmd_approve(a):
     return 0
 
 
+def cmd_ui(a):
+    from robin import ui
+    ui.serve(a.host, a.port)
+    return 0
+
+
 def cmd_trace(a):
     from robin import trace
     recs = trace.read(a.task_id)
@@ -392,6 +399,9 @@ def main(argv=None) -> int:
     s = sub.add_parser("ask"); s.add_argument("request"); s.add_argument("--dry-run", action="store_true",
         help="show routing, tools and prompt without calling the model"); s.set_defaults(fn=cmd_ask)
     sub.add_parser("doctor", help="what works now and what is missing").set_defaults(fn=cmd_doctor)
+    s = sub.add_parser("ui", help="local web page: setup checklist, keys, departments, tools, ask box")
+    s.add_argument("--host", default="127.0.0.1"); s.add_argument("--port", type=int, default=8765)
+    s.set_defaults(fn=cmd_ui)
     s = sub.add_parser("approve", help="David grants an agent one write: robin approve TASK TOOL [--scope ...]")
     s.add_argument("task_id", help="task id, or 'standing' with --standing"); s.add_argument("tool")
     s.add_argument("--scope", default="once", help="once (default) | task | until:YYYY-MM-DD")

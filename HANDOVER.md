@@ -54,6 +54,10 @@ Last session: 2026-11-13, Claude Code (cloud), branch `claude/robin-v2-agent-spe
   metric ladder per agent (validated); robin scorecard; --model override. 71 tests pass.
 - Scheduled knowledge scan still cannot push (3 runs, 403): the trigger has no repo source; Philippine domains still blocked.
 
+- Setup page (tenth pass): `robin ui` — local web page (stdlib, localhost + one-time token): checklist, Anthropic key
+  → .env (never shown back, allowlisted names, 0600), departments, tools, routines, ask box with task page and
+  accept/reject. 76 tests pass. David's own scheduled task pushes robin/knowledge-updates; old trigger paused.
+
 ## In progress → next concrete step
 - Check the first scheduled run's result (session from fire_trigger on 2026-11-14).
 - To try routines: `robin routines enable knowledge-scan` then `robin routines run knowledge-scan` (needs model access).
