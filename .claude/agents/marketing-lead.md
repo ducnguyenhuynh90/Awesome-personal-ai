@@ -45,6 +45,10 @@ metadata:
   - deploy or change permissions
   - create tickets or docs in company tools
   autonomy: draft
+  ladder:
+    offline: rubric + policy pass (claims, ad rules)
+    proxy: copy accepted with little or no edit
+    kpi: conversion or retention lift in A/B
 ---
 
 # marketing-lead

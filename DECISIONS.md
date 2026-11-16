@@ -109,3 +109,14 @@ Format: date · decision · why · alternatives rejected · who. Do not re-open 
 - Why: David wants Robin on cloud Claude; Claude itself is the model there, so no API key or VM is needed for
   interactive use or the daily routine.
 - Who: David ("all three").
+
+## D-016 · 2026-11-16 · Eval flywheel
+- Decision: adopt David's "Eval Flywheel" doc. Labels are accept / edit / reject with a required one-line reason.
+  Process cases carry a suite: regression and never must pass every run (the gate); capability tracks progress.
+  `--runs N` reports pass-every-time vs pass-at-least-once; results (with outputs) are saved privately and
+  `robin eval-diff` lists flipped cases. `robin mine` turns edit/reject feedback into permanent cases using the
+  checks that would have caught the failure; mined cases stay in gitignored evals/private/ (real requests).
+  Every agent has a metric ladder (offline / proxy / KPI), validated. `robin scorecard` gives one weekly line per
+  agent. `--model` runs the suite on another model (model-upgrade playbook).
+- Not yet: LLM-judge calibration against David's labels (needs labelled outputs), A/B on a level-3 KPI.
+- Who: David (doc), Claude.

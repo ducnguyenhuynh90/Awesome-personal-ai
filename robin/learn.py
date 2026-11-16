@@ -27,14 +27,16 @@ FEEDBACK = ROOT / "feedback"
 PROPOSALS = ROOT / "docs" / "proposals"
 STATE = FEEDBACK / "_learn_state.json"
 MAX_RULE_WORDS = 30
-SIGNAL_RANK = {"edit": 0, "down": 1}
+SIGNAL_RANK = {"edit": 0, "reject": 1, "down": 1, "accept": 9}  # accept = positive label, never a learning signal
 
 
 # ---------- capture ----------
 
 def record(task_id: str, kind: str, note: str = "", corrected: str = "") -> Path:
     if kind not in SIGNAL_RANK:
-        raise ValueError("kind must be 'edit' or 'down'")
+        raise ValueError("kind must be accept, edit or reject")
+    if kind in ("edit", "reject", "down") and not note.strip():
+        raise ValueError("edit and reject need a one-line reason (the most valuable data Robin gets)")
     recs = trace.read(task_id)
     result = next((r for r in reversed(recs) if r.get("event") == "result"), {})
     intake = next((r for r in recs if r.get("event") == "intake"), {})
@@ -50,7 +52,7 @@ def record(task_id: str, kind: str, note: str = "", corrected: str = "") -> Path
     return path
 
 
-def _all_feedback() -> list[dict]:
+def all_feedback() -> list[dict]:
     out = []
     for f in sorted(FEEDBACK.glob("*.jsonl")):
         out += [json.loads(line) for line in f.read_text(encoding="utf-8").splitlines() if line.strip()]
@@ -164,7 +166,7 @@ def learn(reflect, today: dt.date | None = None) -> Proposal | None:
     week = _week(today)
     if week in st["weeks"]:
         return None  # weekly cap: silence
-    new = [s for s in _all_feedback() if f"{s['task']}:{s['ts']}" not in st["seen"]]
+    new = [s for s in all_feedback() if f"{s['task']}:{s['ts']}" not in st["seen"] and s["kind"] != "accept"]
     if not new:
         return None
     new.sort(key=lambda s: (SIGNAL_RANK[s["kind"]], s["ts"]))

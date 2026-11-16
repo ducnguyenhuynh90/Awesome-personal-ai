@@ -38,6 +38,10 @@ metadata:
   - deploy or change permissions
   - create tickets or docs in company tools
   autonomy: draft
+  ladder:
+    offline: each step has an owner and a done-check
+    proxy: SOPs adopted
+    kpi: cycle time and errors in the process
 ---
 
 # ops-lead

@@ -191,6 +191,9 @@ def validate(agents: dict[str, Agent] | None = None, skills: dict[str, Skill] | 
     for key, a in agents.items():
         if a.name == "reviewer":
             continue  # verifier: David-owned, no work contract
+        ladder = a.extra.get("ladder") or {}
+        if any(not ladder.get(k) for k in ("offline", "proxy", "kpi")):
+            errors.append(f"agent {key}: metadata.ladder needs offline, proxy and kpi (no ladder = no way to justify its cost)")
         for field in ("owns", "not_owns", "source_of_truth", "needs_approval", "autonomy"):
             if not a.extra.get(field):
                 errors.append(f"agent {key}: metadata.{field} missing (agent contract)")

@@ -37,6 +37,10 @@ metadata:
   - deploy or change permissions
   - create tickets or docs in company tools
   autonomy: draft
+  ladder:
+    offline: no discriminatory criteria; outcomes before requirements
+    proxy: JDs and loops used as written
+    kpi: time to hire, new-hire ramp
 ---
 
 # people-partner

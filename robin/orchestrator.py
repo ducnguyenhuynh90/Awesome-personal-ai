@@ -13,6 +13,7 @@ shortlist, knowledge excerpts, the ask) goes in the user turn.
 from __future__ import annotations
 
 import asyncio
+import os
 import re
 from pathlib import Path
 
@@ -203,7 +204,7 @@ async def run(request: str, task_id: str | None = None, proactive: bool = False)
     findings: list = []
     options = ClaudeAgentOptions(
         system_prompt=system_prompt(),
-        model=models["tiers"]["executor"],
+        model=os.environ.get("ROBIN_MODEL") or models["tiers"]["executor"],
         setting_sources=["project"],
         mcp_servers={"kb": build_kb_server(), **({} if proactive else integrations.mcp_servers())},
         disallowed_tools=["Bash", "Edit", "NotebookEdit"] if proactive else [],

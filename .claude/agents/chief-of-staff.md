@@ -36,6 +36,10 @@ metadata:
   - deploy or change permissions
   - create tickets or docs in company tools
   autonomy: draft
+  ladder:
+    offline: routing eval + process evals pass every run
+    proxy: answers accepted without edit
+    kpi: time from ask to decision
 ---
 
 # chief-of-staff

@@ -40,6 +40,10 @@ metadata:
   - deploy or change permissions
   - create tickets or docs in company tools
   autonomy: investigate
+  ladder:
+    offline: rule quoted from an A source with date
+    proxy: risks resolved before launch
+    kpi: launches without regulatory incidents
 ---
 
 # compliance-officer

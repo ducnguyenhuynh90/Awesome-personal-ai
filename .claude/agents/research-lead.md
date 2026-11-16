@@ -49,6 +49,10 @@ metadata:
   - deploy or change permissions
   - create tickets or docs in company tools
   autonomy: investigate
+  ladder:
+    offline: facts verified against opened A/B sources
+    proxy: insights acted on per week
+    kpi: decisions made with data
 ---
 
 # research-lead

@@ -41,6 +41,10 @@ metadata:
   - deploy or change permissions
   - create tickets or docs in company tools
   autonomy: draft
+  ladder:
+    offline: memo has options, do-nothing, what would change my mind
+    proxy: recommendations adopted
+    kpi: goals on track
 ---
 
 # exec-strategy

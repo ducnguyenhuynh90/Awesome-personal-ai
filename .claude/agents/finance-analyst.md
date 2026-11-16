@@ -34,6 +34,10 @@ metadata:
   - deploy or change permissions
   - create tickets or docs in company tools
   autonomy: investigate
+  ladder:
+    offline: numbers reconcile with the system of record
+    proxy: analyses used in budget calls
+    kpi: spend variance caught early
 ---
 
 # finance-analyst

@@ -38,6 +38,10 @@ metadata:
   - deploy or change permissions
   - create tickets or docs in company tools
   autonomy: draft
+  ladder:
+    offline: triage categories match a human; no personal data
+    proxy: macros used as written
+    kpi: repeat tickets and time to resolve
 ---
 
 # support-lead

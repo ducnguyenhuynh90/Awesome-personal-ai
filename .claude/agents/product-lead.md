@@ -47,6 +47,10 @@ metadata:
   - deploy or change permissions
   - create tickets or docs in company tools
   autonomy: draft
+  ladder:
+    offline: process evals; hypothesis has metric, baseline and decision rule
+    proxy: drafts accepted without edit; rework rounds
+    kpi: experiment win rate and speed of shipping
 ---
 
 # product-lead

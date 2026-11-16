@@ -83,6 +83,18 @@ permissions, deploys, deletes and publishing can never be approved for an agent.
   then `robin checkin`; it messages only when something crosses a threshold. Manage it in claude.ai under
   scheduled tasks.
 
+## Eval flywheel
+
+```bash
+robin feedback <task> --accept | --edit corrected.md --why "..." | --reject "why"   # label every answer
+robin mine            # failures → candidate eval cases;  robin mine --apply  (private, gitignored)
+robin eval process --suite regression,never --runs 3     # gate: must be 100% pass-every-time
+robin eval process --suite capability --runs 3          # progress: 40–70% is healthy
+robin eval-diff evals/results/<before>.json evals/results/<after>.json   # read every flipped case
+robin eval process --model <new-model> --label upgrade  # model-upgrade check
+robin scorecard       # weekly: per agent offline pass, accepted w/o edit, cost, top failure
+```
+
 ## Add to the org
 
 - New skill: copy a `SKILL.md`, keep "Use when ..." in `description`, add ≥ 2 examples, list it in an agent.

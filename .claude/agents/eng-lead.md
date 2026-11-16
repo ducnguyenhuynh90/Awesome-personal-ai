@@ -40,6 +40,10 @@ metadata:
   - deploy or change permissions
   - create tickets or docs in company tools
   autonomy: investigate
+  ladder:
+    offline: risks a reviewer agrees with
+    proxy: risks fixed before build
+    kpi: incidents avoided
 ---
 
 # eng-lead

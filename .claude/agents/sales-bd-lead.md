@@ -40,6 +40,10 @@ metadata:
   - deploy or change permissions
   - create tickets or docs in company tools
   autonomy: draft
+  ladder:
+    offline: profile facts verified; no invented proof
+    proxy: drafts sent after little edit
+    kpi: meetings and deals from drafts
 ---
 
 # sales-bd-lead

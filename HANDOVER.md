@@ -49,6 +49,11 @@ Last session: 2026-11-13, Claude Code (cloud), branch `claude/robin-v2-agent-spe
   pushes to robin/knowledge-updates). Gate fix: connector-prefixed reads (slack_read_*, notion-search) and PostHog
   exec reads. 64 tests pass.
 
+- Eval flywheel (ninth pass, D-016, from David's "Eval Flywheel" doc): accept/edit/reject labels with reason; suites
+  regression / never (6 new never cases) / capability; --runs N; saved results + eval-diff; robin mine (private cases);
+  metric ladder per agent (validated); robin scorecard; --model override. 71 tests pass.
+- Scheduled knowledge scan still cannot push (3 runs, 403): the trigger has no repo source; Philippine domains still blocked.
+
 ## In progress → next concrete step
 - Check the first scheduled run's result (session from fire_trigger on 2026-11-14).
 - To try routines: `robin routines enable knowledge-scan` then `robin routines run knowledge-scan` (needs model access).

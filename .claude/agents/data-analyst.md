@@ -40,6 +40,10 @@ metadata:
   - deploy or change permissions
   - create tickets or docs in company tools
   autonomy: investigate
+  ladder:
+    offline: numbers match the query; no estimate without data
+    proxy: answers used without re-query
+    kpi: metric moves explained before they cost money
 ---
 
 # data-analyst

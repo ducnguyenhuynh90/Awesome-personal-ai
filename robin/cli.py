@@ -120,23 +120,62 @@ def cmd_eval(a):
 
 
 def _eval_process(a):
+    """Live process evals by suite, N runs per case; results saved (gitignored) for diffs and the scorecard."""
+    import os
+    from robin import evalkit, integrations
+    integrations.load_env_file()
+    if not integrations.model_status().ready:
+        print("process evals need model access — robin doctor"); return 2
+    if a.model:
+        os.environ["ROBIN_MODEL"] = a.model
+    cases = evalkit.load_cases(a.suite.split(",") if a.suite else None, a.only.split(",") if a.only else None)
+    res = evalkit.run_cases(cases, runs=a.runs)
+    for r in res["rows"]:
+        mark = "PASS" if r["pass_all"] else ("FLAKY" if r["pass_any"] else "FAIL")
+        print(f"{mark:5} {r['id']:24} {r['suite']:10} {r['passes']}/{r['runs']} · ${r['cost_usd']:.3f} · {r['seconds']}s"
+              + ("" if r["pass_all"] else f" — {'; '.join(r['attempts'][-1]['details'])}"))
+    for suite, v in res["suites"].items():
+        print(f"{suite:10} pass every run {v['pass_all']}/{v['cases']} · pass at least once {v['pass_any']}/{v['cases']}"
+              f" · ${v['cost_usd']:.3f} · avg {v['avg_seconds']}s")
+    path = evalkit.save(res, label=a.label or "", model=a.model or "")
+    print(f"gate (regression + never at 100%): {'OK' if res['gate_ok'] else 'BLOCKED'} · saved {path.relative_to(ROOT)}")
+    return 0 if res["gate_ok"] else 1
+
+
+def cmd_eval_diff(a):
+    from robin import evalkit
+    print("\n".join(evalkit.diff(Path(a.before), Path(a.after))) or "no case flipped")
+    return 0
+
+
+def cmd_mine(a):
+    """Confirmed failures become permanent eval cases (private: they come from real requests)."""
     import yaml
-    from evals.process.checks import CHECKS
-    from robin.orchestrator import run_sync
-    cases = yaml.safe_load((ROOT / "evals" / "process" / "cases.yaml").read_text())["cases"]
-    if a.only:
-        cases = [c for c in cases if c["id"] in a.only.split(",")]
-    passed, cost = 0, 0.0
-    for c in cases:
-        res = run_sync(c["request"])
-        cost += res.get("cost_usd", 0)
-        results = [CHECKS[name](res["output"], trace_tools=res.get("tools"), **(c.get("args") or {}))
-                   for name in c["checks"]]
-        ok = all(r[0] for r in results)
-        passed += ok
-        print(f"{'PASS' if ok else 'FAIL'} {c['id']} [{res['task']}] " + "; ".join(r[1] for r in results))
-    print(f"process evals: {passed}/{len(cases)} pass · cost ${cost:.4f}")
-    return 0 if passed == len(cases) else 1
+    from robin import evalkit, learn
+    existing = {c["id"] for c in evalkit.load_cases()}
+    cand = evalkit.mine(learn.all_feedback(), mined_ids=existing)
+    if not cand:
+        print("nothing to mine (no new edit/reject feedback)"); return 0
+    if not a.apply:
+        print(yaml.safe_dump({"cases": cand}, sort_keys=False, allow_unicode=True))
+        print(f"{len(cand)} candidate case(s). Confirm, then: robin mine --apply  (writes evals/private/cases.yaml, gitignored)")
+        return 0
+    print(f"added {len(cand)} case(s) → {evalkit.append_private(cand).relative_to(ROOT)}")
+    return 0
+
+
+def cmd_scorecard(a):
+    import json as _json
+    from robin import evalkit, learn, trace
+    recs = []
+    for f in sorted(trace.TRACES.glob("*.jsonl")):
+        if f.name in ("routines.jsonl", "checkins.jsonl"):
+            continue
+        recs += [_json.loads(x) for x in f.read_text(encoding="utf-8").splitlines() if x.strip()]
+    saved = sorted(evalkit.RESULTS.glob("*.json")) if evalkit.RESULTS.exists() else []
+    latest = _json.loads(saved[-1].read_text()) if saved else None
+    print("\n".join(evalkit.scorecard(recs, learn.all_feedback(), latest, days=a.days)))
+    return 0
 
 
 def cmd_ask(a):
@@ -216,9 +255,17 @@ def cmd_profile(a):
 
 def cmd_feedback(a):
     from robin import learn
-    corrected = Path(a.edit).read_text(encoding="utf-8") if a.edit else ""
-    kind = "edit" if a.edit else "down"
-    print(f"saved {kind} for {a.task_id} → {learn.record(a.task_id, kind, note=a.down or '', corrected=corrected).name}")
+    if a.accept:
+        kind, corrected = "accept", ""
+    elif a.edit:
+        kind, corrected = "edit", Path(a.edit).read_text(encoding="utf-8")
+    else:
+        kind, corrected = "reject", ""
+    try:
+        path = learn.record(a.task_id, kind, note=a.why or a.reject or "", corrected=corrected)
+    except ValueError as e:
+        print(f"refused: {e}"); return 2
+    print(f"saved {kind} for {a.task_id} → {path.name}")
     return 0
 
 
@@ -337,6 +384,10 @@ def main(argv=None) -> int:
     s = sub.add_parser("eval"); s.add_argument("suite"); s.add_argument("--threshold", type=float, default=0.85)
     s.add_argument("--set", default="cases", help="cases (tuning set) or holdout")
     s.add_argument("--only", help="process eval ids, comma-separated")
+    s.add_argument("--suite", help="process: regression,never,capability (default: all)")
+    s.add_argument("--runs", type=int, default=1, help="process: runs per case (stochastic agents: use 3)")
+    s.add_argument("--label", default="", help="process: label for the saved results file")
+    s.add_argument("--model", default="", help="process: override the executor model (model-upgrade test)")
     s.set_defaults(fn=cmd_eval)
     s = sub.add_parser("ask"); s.add_argument("request"); s.add_argument("--dry-run", action="store_true",
         help="show routing, tools and prompt without calling the model"); s.set_defaults(fn=cmd_ask)
@@ -351,10 +402,19 @@ def main(argv=None) -> int:
     s.add_argument("action", choices=["list", "run", "enable", "disable"]); s.add_argument("name", nargs="?")
     s.add_argument("--force", action="store_true", help="run even if limits say skip"); s.set_defaults(fn=cmd_routines)
     sub.add_parser("checkin", help="digest built in code: one message or silent (no model call)").set_defaults(fn=cmd_checkin)
-    s = sub.add_parser("feedback", help="record David's correction (--edit FILE) or 👎 (--down WHY) for a task")
+    s = sub.add_parser("feedback", help="label a task: --accept | --edit FILE --why WHY | --reject WHY")
     s.add_argument("task_id"); g = s.add_mutually_exclusive_group(required=True)
-    g.add_argument("--edit", help="file with David's corrected text"); g.add_argument("--down", help="why it was wrong")
+    g.add_argument("--accept", action="store_true", help="used as is")
+    g.add_argument("--edit", help="file with David's corrected text (needs --why)")
+    g.add_argument("--reject", "--down", dest="reject", help="why it was wrong")
+    s.add_argument("--why", help="one-line reason (required with --edit)")
     s.set_defaults(fn=cmd_feedback)
+    s = sub.add_parser("mine", help="turn edit/reject feedback into permanent eval cases (private)")
+    s.add_argument("--apply", action="store_true"); s.set_defaults(fn=cmd_mine)
+    s = sub.add_parser("scorecard", help="weekly line per agent: offline, accepted w/o edit, cost, top failure")
+    s.add_argument("--days", type=int, default=7); s.set_defaults(fn=cmd_scorecard)
+    s = sub.add_parser("eval-diff", help="cases that flipped between two saved eval runs")
+    s.add_argument("before"); s.add_argument("after"); s.set_defaults(fn=cmd_eval_diff)
     s = sub.add_parser("learn", help="turn the best new feedback into one general rule (max 1/week)")
     s.add_argument("--apply", help="apply a learning proposal file"); s.set_defaults(fn=cmd_learn)
     for name, help_ in (("profile", "show the owner profile"), ("remember", "add a preference line"),
