@@ -1,6 +1,6 @@
 # HANDOVER (rewrite at the end of every session)
 
-Last session: 2026-11-13, Claude Code (cloud), branch `claude/robin-v2-agent-spec-t6sx7r`.
+Last session: 2026-11-16, Claude Code (cloud), branch `claude/cool-pasteur-4rpjcf`.
 
 ## State in 5 lines
 1. Agent org built: chief-of-staff + 12 department agents + reviewer (`.claude/agents/`), 38 skills (`.claude/skills/`).
@@ -54,7 +54,15 @@ Last session: 2026-11-13, Claude Code (cloud), branch `claude/robin-v2-agent-spe
   metric ladder per agent (validated); robin scorecard; --model override. 71 tests pass.
 - Scheduled knowledge scan still cannot push (3 runs, 403): the trigger has no repo source; Philippine domains still blocked.
 
+- Free social listening (tenth pass, D-017, David "go, build all free one"): `robin listen` (robin/listen.py,
+  config/listen.yaml, docs/listening.md) — HN, RSS (Reddit/hnrss/Google News/Alerts), Stack Exchange, App Store
+  reviews, import; rule scoring, dedup, need/lead classes, precision@20; pains → work/listen/pains.md for
+  voice-of-customer; check-in line for new high-intent leads. All sources OFF. 82 tests pass.
+  NOT run live: this cloud container's proxy blocks all four hosts (403); errors are reported, not hidden.
+
 ## In progress → next concrete step
+- Listening pilot: David writes harness/private/listen.yaml (focus + keywords for one product, sources on),
+  runs `robin listen run` daily on a machine with open network, reviews top 20 → target precision@20 ≥ 0.6 in 2 weeks.
 - Check the first scheduled run's result (session from fire_trigger on 2026-11-14).
 - To try routines: `robin routines enable knowledge-scan` then `robin routines run knowledge-scan` (needs model access).
 - After live runs: `robin feedback <task> --edit corrected.md` on real answers, then `robin learn` weekly.
@@ -75,6 +83,7 @@ Last session: 2026-11-13, Claude Code (cloud), branch `claude/robin-v2-agent-spe
 - Anthropic credentials and Slack app tokens on the VM.
 
 ## Open questions for David
+0. Which product and buyer first for the listening pilot (one focus sentence)?
 1. Metric definitions (FTD, D2 deposit retention, LTV, CAC payback) — data-analyst is blocked without them.
 2. Approve docs/proposals/2026-11-13-first-four-departments.md.
 3. Fill `harness/goals.md` with Q4 goals — mode C (autonomous agenda) depends on it.

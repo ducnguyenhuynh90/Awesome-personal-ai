@@ -1,0 +1,81 @@
+# Free social listening (robin listen). Method: docs/listening.md.
+#
+# THIS FILE IS A GENERIC EXAMPLE AND THE REPO IS PUBLIC. Put real focus, keywords, subreddits and app ids in
+# harness/private/listen.yaml (gitignored). It overrides this file key by key; `rules` is replaced as a whole.
+# Every source is OFF until you turn it on there.
+
+# One sentence: who we listen for. Shown on top of every output.
+focus: "Example: small online sellers who struggle to answer customer questions fast enough."
+lookback_days: 7
+min_score_to_keep: 10          # below this a post is dropped, not stored
+max_items_per_run: 2000
+
+# A post becomes a LEAD (someone asking for help) when it has no negative phrase, score >= min_score and
+# intent weight >= min_intent. Otherwise it is a NEED if it names a pain. Humans review leads; nobody auto-replies.
+lead: {min_score: 40, min_intent: 10}
+
+# Fetch only these hosts. Add one only if the source is free and public.
+allowed_hosts: [hn.algolia.com, reddit.com, hnrss.org, news.google.com, api.stackexchange.com, itunes.apple.com]
+
+sources:
+  hn:                       # Hacker News stories + comments (Algolia API, free)
+    enabled: false
+    tags: [story, comment]
+    per_query: 30
+    queries: ["customer support backlog", "helpdesk recommendation"]
+  rss:                      # any RSS/Atom feed, free
+    enabled: false
+    subreddits: [smallbusiness, ecommerce]          # r/NAME/new/.rss
+    reddit_search: ["support tickets overwhelmed"]  # reddit.com/search.rss, newest first, past week
+    hnrss: []                                       # hnrss.org/newest?q=...
+    google_news: []                                 # news.google.com RSS search (mentions, funding, launches)
+    google_news_locale: {hl: en, gl: US}
+    feeds: []                                       # any other feed: Google Alerts RSS, blogs, job boards
+    keywords: []                                    # optional filter: keep items mentioning any of these
+    delay_s: 1
+  stackexchange:            # Stack Exchange API, free (no key: ~300 requests/day per IP)
+    enabled: false
+    sites: [webapps]
+    per_query: 30
+    queries: ["helpdesk"]
+  appstore:                 # Apple App Store reviews RSS, free (own app or a competitor's)
+    enabled: false
+    pages: 2
+    max_rating: 3                                   # keep 1-3 star reviews (pains)
+    apps: []                                        # - {id: "123456789", country: us}
+
+# Scoring (0-100, explainable). Write phrases the way the BUYER writes them, 2-4 words.
+# pain 6-12 · intent 5-15 (asking for a recommendation = strongest) · persona = 2-3 segments · negative <= 0.
+# Every false positive in review becomes one negative phrase here, then `robin listen rescore`.
+rules:
+  pain:
+    "can't keep up": 10
+    "too many tickets": 12
+    "slow response": 8
+    "customers complain": 8
+    "losing customers": 10
+    "overwhelmed": 6
+    "frustrated": 6
+  intent:
+    "looking for": 10
+    "any recommendations": 12
+    "recommend a": 10
+    "what do you use": 10
+    "alternative to": 12
+    "need help": 10
+    "willing to pay": 12
+    "anyone tried": 6
+    "how do i": 6
+  persona:
+    shop: [shopify, store, ecommerce, seller, etsy]
+    saas: [saas, b2b, startup, founder]
+  negative:
+    "we help": -15
+    "book a call": -15
+    "dm me": -12
+    "check out my": -10
+    "our agency": -15
+    "i built": -8
+    "giveaway": -15
+    "hiring": -10
+    "open to work": -15

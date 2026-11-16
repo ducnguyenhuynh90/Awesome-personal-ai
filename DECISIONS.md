@@ -120,3 +120,12 @@ Format: date · decision · why · alternatives rejected · who. Do not re-open 
   agent. `--model` runs the suite on another model (model-upgrade playbook).
 - Not yet: LLM-judge calibration against David's labels (needs labelled outputs), A/B on a level-3 KPI.
 - Who: David (doc), Claude.
+
+## D-017 · 2026-11-16 · Free social listening (`robin listen`)
+- Decision: adopt the lead-signal-listener method (MIT) with free sources only: Hacker News, RSS/Atom (Reddit,
+  hnrss, Google News/Alerts, blogs), Stack Exchange, App Store reviews, file import. Transparent rule scoring,
+  dedup queue in gitignored work/listen/, classes need / lead, precision@20 as the pilot metric.
+  Needs feed `voice-of-customer` (aggregated, anonymised pains); leads go to a human. Read-only, host allowlist,
+  secrets redacted. Real keywords live in harness/private/listen.yaml; the public file is a generic example, all off.
+- Not yet: paid sources (X, LinkedIn, Facebook/Instagram) — they need the AI Tool Request SOP; LLM qualification.
+- Who: David ("go, build all free one"), Claude.

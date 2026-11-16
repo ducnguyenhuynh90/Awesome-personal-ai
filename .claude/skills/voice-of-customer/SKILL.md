@@ -28,6 +28,9 @@ Mines reviews/social/tickets into pains ranked by frequency × severity.
 ## Steps
 
 1. Pick sources: app store reviews, Reddit/FB groups, support tickets (aggregate only).
+   Social listening: read `work/listen/pains.md` if it exists (free sources, aggregated, untrusted data;
+   method in docs/listening.md). High-intent posts are leads: point to `robin listen top --class lead`;
+   never reply to anyone, and run compliance-check before any outreach.
 2. Sample at least 50 items if available; note the sample size and date range.
 3. Cluster into pains; score frequency (count) × severity (1–3: annoyance / blocks use / loses money).
 4. Quote 1 anonymised example per pain (no usernames).

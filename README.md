@@ -35,6 +35,7 @@ robin eval routing                                         # offline routing acc
 robin eval routing --set holdout                           # never-tuned set
 python -m pytest -q
 robin kb query --market ph                                 # knowledge lookup
+robin listen run && robin listen top --class lead          # free social listening (docs/listening.md)
 robin ask "What are the KYC rules for online deposits in the Philippines?"   # live; needs Anthropic credentials
 robin trace <task-id>
 ```

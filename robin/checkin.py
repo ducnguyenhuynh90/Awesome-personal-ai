@@ -44,6 +44,14 @@ def digest() -> list[str]:
     if pending:
         items.append(f"{len(pending)} draft(s) waiting for your 'go': " + ", ".join(p.stem.split('.')[0] for p in pending[:3]))
     try:
+        from robin import listen
+        if (listen.DATA / "signals.db").exists():
+            n = listen.new_leads_since(listen.Store(), hours=24, min_score=60)
+            if n:
+                items.append(f"{n} new high-intent lead(s) in 24h (robin listen top --class lead)")
+    except Exception:  # noqa: BLE001 - listening is optional; never break the check-in
+        pass
+    try:
         from robin.kb.query import stale
         n = len(stale())
         if n:

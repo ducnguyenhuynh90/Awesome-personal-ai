@@ -15,6 +15,7 @@
   robin routines list|run|enable|disable NAME     scheduled routines (read-only, SILENT by default)
   robin checkin                    digest in code: one message or silent, zero tokens when silent
   robin approve TASK TOOL [--scope once|task|until:DATE] [--match k=v] [--standing]   grant one write
+  robin listen run|top|mark|rescore|pains|status|export|import   free social listening (config/listen.yaml)
   robin kb lint|index|stale        knowledge checks / regenerate indexes / list stale nodes
   robin kb query [--near ID] [--hops N] [--market X] [--type T] [--text "..."]
   robin kb new ID TYPE "summary"   create a node
@@ -373,6 +374,65 @@ def cmd_kb(a):
         print("ok")
 
 
+def cmd_listen(a):
+    """Free social listening. Read-only; lead rows stay in work/listen/ (gitignored)."""
+    from robin import listen
+    cfg = listen.load_config()
+    errs = listen.validate_config(cfg)
+    if errs:
+        print("config/listen.yaml: " + "; ".join(errs)); return 2
+    store = listen.Store()
+    if a.action == "run":
+        res = listen.run(cfg, store, only=a.source)
+        if not res["sources"]:
+            print("no source enabled — turn one on in harness/private/listen.yaml"); return 2
+        print(f"run {res['run_id']}: {res['new']} new from {res['fetched']} fetched "
+              f"({', '.join(res['sources'])}); dropped {res['below_min_score']} low-score, {res['too_old']} old")
+        for e in res["errors"]:
+            print(f"  source down: {e}")
+        for s in res["secrets_redacted_at"]:
+            print(f"  secret redacted (not stored) in: {s} — report it per the security process")
+        return 1 if res["errors"] and not res["fetched"] else 0
+    if a.action == "top":
+        where, args = ["status = ?"], [a.status]
+        if a.cls:
+            where.append("class = ?"); args.append(a.cls)
+        if a.last_run and store.last_run():
+            where.append("run_id = ?"); args.append(store.last_run()["id"])
+        for r in store.rows(" and ".join(where), tuple(args), limit=a.limit):
+            m = json.loads(r["matched"])
+            terms = ", ".join(m["pain"] + m["intent"] + m["negative"])
+            print(f"#{r['id']:<5} {r['score']:>3} {r['class']:5} {r['persona']:8} {r['source']:13} "
+                  f"{r['title'][:70] or r['text'][:70]}\n       {r['url']}\n       matched: {terms}")
+        return 0
+    if a.action == "mark":
+        if not a.id or not a.status_to:
+            print("usage: robin listen mark ID STATUS [--note ...]"); return 2
+        print("ok" if store.mark(int(a.id), a.status_to, a.note or "") else f"no signal #{a.id}")
+        return 0
+    if a.action == "rescore":
+        print(f"rescored {listen.rescore(cfg, store)} signals"); return 0
+    if a.action == "pains":
+        print(listen.pains_markdown(cfg, store, a.days))
+        print(f"\n(agents read {listen.write_pains(cfg, store, a.days).relative_to(ROOT)})")
+        return 0
+    if a.action == "status":
+        counts = dict(store.db.execute("select class, count(*) from signals group by class").fetchall())
+        st = dict(store.db.execute("select status, count(*) from signals group by status").fetchall())
+        p = listen.precision_at(store)
+        print(f"focus: {cfg.get('focus')}\nsignals: {counts or 0} · status: {st or 0}")
+        print(f"last run: {store.last_run() or '-'}")
+        print(f"precision@20 (reviewed): {p['precision']} ({p['good']}/{p['reviewed']})")
+        return 0
+    if a.action == "export":
+        print(listen.export(store, a.fmt).relative_to(ROOT)); return 0
+    if a.action == "import":
+        if not a.id:
+            print("usage: robin listen import FILE.json|FILE.csv"); return 2
+        print(listen.import_file(Path(a.id), cfg, store)); return 0
+    return 2
+
+
 def main(argv=None) -> int:
     p = argparse.ArgumentParser(prog="robin", description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     sub = p.add_subparsers(dest="cmd", required=True)
@@ -431,6 +491,20 @@ def main(argv=None) -> int:
     s.add_argument("action", choices=["list", "enable", "disable"]); s.add_argument("name", nargs="?")
     s.set_defaults(fn=cmd_tools)
     s = sub.add_parser("trace"); s.add_argument("task_id"); s.set_defaults(fn=cmd_trace)
+    s = sub.add_parser("listen", help="free social listening: run | top | mark ID STATUS | rescore | pains | "
+                                      "status | export | import FILE")
+    s.add_argument("action", choices=["run", "top", "mark", "rescore", "pains", "status", "export", "import"])
+    s.add_argument("id", nargs="?", help="mark: signal id · import: file path")
+    s.add_argument("status_to", nargs="?", help="mark: new | qualified | contacted | replied | ignored")
+    s.add_argument("--note", help="mark: why (false positives become negative rules)")
+    s.add_argument("--source", help="run: only this source")
+    s.add_argument("--status", default="new", help="top: status filter (default new)")
+    s.add_argument("--class", dest="cls", choices=["lead", "need", "other"], help="top: lead | need | other")
+    s.add_argument("--last-run", action="store_true", help="top: only signals first seen in the last run")
+    s.add_argument("--limit", type=int, default=20)
+    s.add_argument("--days", type=int, default=30, help="pains: window")
+    s.add_argument("--fmt", choices=["csv", "json"], default="csv")
+    s.set_defaults(fn=cmd_listen)
 
     kb = sub.add_parser("kb"); kb.set_defaults(fn=cmd_kb)
     ks = kb.add_subparsers(dest="kb_cmd", required=True)
