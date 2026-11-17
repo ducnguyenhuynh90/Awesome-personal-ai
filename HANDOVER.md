@@ -87,3 +87,9 @@ Last session: 2026-11-13, Claude Code (cloud), branch `claude/robin-v2-agent-spe
 - Framework research (docs/research/agent-teams.md) — settled: files + Agent SDK, no CrewAI/AutoGen.
 - Router choice — BM25 + two-level routing, measured; improve descriptions/examples, not the algorithm.
 - Agents/skills were bootstrapped by a one-off generator; edit the files directly now (they are the source of truth).
+
+- Learning design (2026-11-17): new skill `learning-activity` (people-partner) from the "Game Builder Lab" 8 musts
+  (goal = behaviour at work checked by a lead; real cases, anonymised; explain why; guessing must not win; score =
+  new cases, pass mark before launch; self-play; 3-learner test; plain words). Routing eval unchanged 52/54, 76 tests pass.
+  Proposed routing cases for David (evals/ is his): "Build a quiz that certifies CS agents on VIP handling" and
+  "Review this training game before launch" → people-partner/learning-activity.

@@ -1,12 +1,13 @@
 ---
 name: people-partner
-description: 'Use for people and hiring process: job descriptions, scorecards, interview loops and questions, onboarding plans. Not for HR records or individual cases.'
+description: 'Use for people and hiring process: job descriptions, scorecards, interview loops and questions, onboarding plans, training and e-learning activities (workshops, quizzes, learning games). Not for HR records or individual cases.'
 tools: Read, Grep, Glob, WebSearch, WebFetch, Write, Skill, mcp__kb__query, mcp__kb__add_gap
 model: sonnet
 skills:
 - job-description
 - interview-plan
 - onboarding-plan
+- learning-activity
 metadata:
   department: people
   kind: department

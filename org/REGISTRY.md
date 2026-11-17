@@ -15,7 +15,7 @@ exec-strategy | executive | Use for CEO/founder and leadership work: strategy, d
 finance-analyst | finance | Use for finance analysis: budget vs actual, spend and cost overruns, unit economics (CAC, LTV, payback, margin) | budget-variance, unit-economics
 marketing-lead | marketing | Use for marketing: campaigns and promotions, go-to-market and launches, content and social calendars, ad and CRM copy, push notifications. | campaign-brief, content-calendar, copy-variants, draft-in-voice
 ops-lead | operations | Use for operations: SOPs and process docs, checklists, vendor and tool comparisons, turning meeting notes or threads into actions. | sop-writer, vendor-compare, meeting-actions
-people-partner | people | Use for people and hiring process: job descriptions, scorecards, interview loops and questions, onboarding plans | job-description, interview-plan, onboarding-plan
+people-partner | people | Use for people and hiring process: job descriptions, scorecards, interview loops and questions, onboarding plans, training and e-learning activities (workshops, quizzes, learning games) | job-description, interview-plan, onboarding-plan, learning-activity
 product-lead | product | Use for product management: turning ideas into hypotheses and experiments, PRDs and specs, backlog and roadmap prioritisation, feature trade-offs. | idea-to-hypothesis, prd-draft, prioritize-backlog
 research-lead | market-research | Use for market research: country and market scans, regulation and payments landscape, competitor teardowns, customer/player voice from reviews and social. | market-scan, competitor-teardown, voice-of-customer, source-grading, research-brief
 reviewer | staff | Use for checking any deliverable against the rubric before delivery; fresh context, returns a verdict JSON | review-rubric
@@ -42,6 +42,7 @@ idea-to-hypothesis | product | an idea, complaint or opportunity must become a t
 incident-postmortem | engineering | an outage, incident or serious bug happened and needs a blameless postmortem or timeline.
 interview-plan | people | a structured interview loop, questions or a take-home exercise must be designed for a role.
 job-description | people | a role must be defined: job description, scorecard, or hiring brief.
+learning-activity | people | a training, e-learning module, quiz, assessment or certification activity must be built or checked.
 market-scan | market-research | you need the current state of a market or country: regulation, payments, players, trends.
 meeting-actions | operations | meeting notes, transcripts or long threads must become decisions, owners and deadlines.
 meeting-prep | shared | someone has a meeting coming up and needs a one-page prep: goal, context, asks, risks.
