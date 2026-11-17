@@ -19,6 +19,7 @@ metadata:
   - How does our CRM compare to HubSpot on pricing?
   writes_to:
   - knowledge/competitors/
+  word_cap: 250
 ---
 
 # competitor-teardown

@@ -11,6 +11,13 @@ metadata:
   - significance
   - variant
   - uplift
+  - did
+  - impact
+  - lift
+  - worked
+  - effect
+  - campaign result
+  - increase
   examples:
   - Read out the GCash cashback test
   - Did the new onboarding variant win?

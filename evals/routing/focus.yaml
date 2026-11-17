@@ -1,0 +1,13 @@
+# Boundary cases between the four active departments (D-011). Runs with config/org.yaml active departments:
+# `robin eval routing --set focus`. Inactive-department asks must go to chief-of-staff.
+cases:
+  - {request: "What promos are competitors running in PH this month?", agent: research-lead, skill: competitor-teardown}
+  - {request: "Design a promo to beat the competitor's welcome bonus", agent: marketing-lead, skill: campaign-brief}
+  - {request: "Did the welcome bonus campaign increase FTD?", agent: data-analyst, skill: experiment-readout}
+  - {request: "Should the welcome bonus become a permanent product feature? Write the spec", agent: product-lead, skill: prd-draft}
+  - {request: "What do players say about our welcome bonus in reviews?", agent: research-lead, skill: voice-of-customer}
+  - {request: "How many players claimed the welcome bonus last week?", agent: data-analyst, skill: metric-pull}
+  - {request: "Write SMS copy announcing the new welcome bonus", agent: marketing-lead, skill: copy-variants}
+  - {request: "Turn 'players abandon the cashier' into an experiment", agent: product-lead, skill: idea-to-hypothesis}
+  - {request: "Write a job description for a CRM marketer", agent: chief-of-staff}
+  - {request: "Summarise the obligations in our new payment provider contract", agent: chief-of-staff}

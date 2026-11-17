@@ -8,3 +8,7 @@ work/
 outbox/
 knowledge/.write.lock
 .env
+harness/private/
+feedback/
+evals/results/
+evals/private/

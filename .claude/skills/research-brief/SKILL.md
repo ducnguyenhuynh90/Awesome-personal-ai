@@ -16,6 +16,7 @@ metadata:
   - Find out how other companies run AI agent teams
   writes_to:
   - knowledge/
+  word_cap: 250
 ---
 
 # research-brief
@@ -29,6 +30,7 @@ General web/desk research that returns a sourced, decision-oriented answer.
 3. Search; open at most 5 sources; grade each with source-grading.
 4. Write line 1 as the answer, then 3–5 evidence bullets (number + source).
 5. Facts worth keeping go to the knowledge base via the kb tools (`add_source`, `add_fact`); unknowns go to `add_gap`.
+6. Open every source you cite (WebFetch) and confirm the claim is on the page. Never cite from search-result snippets; unopened = not a source.
 
 ## Output
 
@@ -45,3 +47,4 @@ Line 1: answer. Then ≤ 5 bullets `claim — [source](url) — grade`. Then `Ne
 
 - Summarising everything found instead of answering the question.
 - Re-researching what the knowledge base already holds.
+- Citing search-result snippets without opening the page (learned 2026-11-13 smoke test).

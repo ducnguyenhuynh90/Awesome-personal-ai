@@ -1,4 +1,4 @@
-"""Secret scanner (S5 definition).
+"""Secret scanner (company definition).
 
 A secret lets someone authenticate, sign or decrypt: passwords, secret keys,
 private keys, access tokens, session cookies, 2FA seeds, DB URLs with a password.
@@ -41,7 +41,7 @@ PATTERNS: list[tuple[str, re.Pattern]] = [
         r"[\"']?\s*[:=]\s*[\"']?(?P<v>[^\s\"',;]{8,})")),
 ]
 
-# Values that look like secrets but are not (S5 definition).
+# Values that look like secrets but are not (company definition).
 NOT_SECRET = re.compile(
     r"^(?:\[REDACTED:[a-z_]+\]|\*+|x{4,}|X{4,}|<[^>]+>|\$\{[^}]+\}|changeme|placeholder|example|redacted|null|none|true|false|"
     r"(?:pk|phc)_[A-Za-z0-9_]+|[0-9a-f]{32}|[0-9a-f]{40}|[0-9a-f]{64}|.*\.\.\..*)$",

@@ -18,6 +18,7 @@ metadata:
   - Top pains of small businesses using CRMs
   writes_to:
   - knowledge/players/
+  word_cap: 250
 ---
 
 # voice-of-customer

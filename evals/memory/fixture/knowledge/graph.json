@@ -1,0 +1,157 @@
+{
+ "nodes": [
+  {
+   "id": "competitor-lunaplay",
+   "type": "competitor",
+   "status": "active",
+   "markets": [
+    "borea"
+   ],
+   "updated": "2026-11-13",
+   "summary": "Lunaplay: Borea challenger with a VIP cashback program."
+  },
+  {
+   "id": "competitor-quickbet",
+   "type": "competitor",
+   "status": "active",
+   "markets": [
+    "aland"
+   ],
+   "updated": "2026-11-13",
+   "summary": "Quickbet: largest rival in Aland, aggressive welcome bonus, instant withdrawals."
+  },
+  {
+   "id": "market-aland",
+   "type": "market",
+   "status": "active",
+   "markets": [
+    "aland"
+   ],
+   "updated": "2026-11-13",
+   "summary": "Aland market: e-wallet first, strict deposit KYC, mobile only."
+  },
+  {
+   "id": "market-borea",
+   "type": "market",
+   "status": "active",
+   "markets": [
+    "borea"
+   ],
+   "updated": "2026-11-13",
+   "summary": "Borea market: bank transfer dominant, fast-growing, light regulation."
+  },
+  {
+   "id": "metric-d2-retention",
+   "type": "metric",
+   "status": "active",
+   "markets": [],
+   "updated": "2026-11-13",
+   "summary": "Day-2 deposit retention: first depositors who deposit again on day two, over all first depositors."
+  },
+  {
+   "id": "metric-ftd",
+   "type": "metric",
+   "status": "active",
+   "markets": [],
+   "updated": "2026-11-13",
+   "summary": "First-time deposit: share of registrants who complete a first successful deposit."
+  },
+  {
+   "id": "pain-kyc-friction",
+   "type": "player-pain",
+   "status": "active",
+   "markets": [
+    "aland"
+   ],
+   "updated": "2026-11-13",
+   "summary": "Document upload during KYC fails on low-end phones, blocking first deposit."
+  },
+  {
+   "id": "pain-slow-withdrawal",
+   "type": "player-pain",
+   "status": "active",
+   "markets": [
+    "aland",
+    "borea"
+   ],
+   "updated": "2026-11-13",
+   "summary": "Players complain withdrawals take over a day; top review complaint."
+  },
+  {
+   "id": "pm-wallet-x",
+   "type": "payment-method",
+   "status": "active",
+   "markets": [
+    "aland"
+   ],
+   "updated": "2026-11-13",
+   "summary": "Wallet X: the leading e-wallet in Aland, used for most small deposits."
+  },
+  {
+   "id": "regulator-aland-gc",
+   "type": "regulator",
+   "status": "active",
+   "markets": [
+    "aland"
+   ],
+   "updated": "2026-11-13",
+   "summary": "Aland Gaming Commission: licenses operators and sets deposit KYC rules."
+  }
+ ],
+ "edges": [
+  {
+   "from": "competitor-lunaplay",
+   "edge": "operates_in",
+   "to": "market-borea",
+   "note": ""
+  },
+  {
+   "from": "competitor-quickbet",
+   "edge": "operates_in",
+   "to": "market-aland",
+   "note": ""
+  },
+  {
+   "from": "competitor-quickbet",
+   "edge": "uses",
+   "to": "pm-wallet-x",
+   "note": ""
+  },
+  {
+   "from": "competitor-quickbet",
+   "edge": "competes_with",
+   "to": "competitor-lunaplay",
+   "note": ""
+  },
+  {
+   "from": "market-aland",
+   "edge": "regulated_by",
+   "to": "regulator-aland-gc",
+   "note": ""
+  },
+  {
+   "from": "pain-kyc-friction",
+   "edge": "impacts",
+   "to": "metric-ftd",
+   "note": "-, causal"
+  },
+  {
+   "from": "pain-kyc-friction",
+   "edge": "part_of",
+   "to": "market-aland",
+   "note": ""
+  },
+  {
+   "from": "pain-slow-withdrawal",
+   "edge": "impacts",
+   "to": "metric-d2-retention",
+   "note": "-, causal"
+  },
+  {
+   "from": "pm-wallet-x",
+   "edge": "part_of",
+   "to": "market-aland",
+   "note": ""
+  }
+ ]
+}

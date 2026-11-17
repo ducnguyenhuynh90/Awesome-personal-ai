@@ -6,7 +6,7 @@ cases:
   - {request: "Are we on track for this quarter's targets?", agent: exec-strategy, skill: okr-review}
   - {request: "Draft the quarterly letter to our investors", agent: exec-strategy, skill: exec-brief}
   - {request: "Help me set objectives and key results for 2027 H1", agent: exec-strategy, skill: okr-review}
-  - {request: "Should we shut down the TinderPay side project or keep funding it?", agent: exec-strategy, skill: decision-memo}
+  - {request: "Should we shut down the payments side project or keep funding it?", agent: exec-strategy, skill: decision-memo}
   # product
   - {request: "Users say signup is too long; how would we test a shorter flow?", agent: product-lead, skill: idea-to-hypothesis}
   - {request: "Write the requirements doc for a referral feature", agent: product-lead, skill: prd-draft}

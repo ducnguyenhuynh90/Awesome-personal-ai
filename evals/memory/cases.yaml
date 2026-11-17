@@ -1,0 +1,16 @@
+# Memory retrieval eval (approved by David 2026-11-13). Labelled queries against the synthetic fixture KB
+# (evals/memory/fixture/knowledge — fictional markets and companies). Scores precision and recall of
+# `kb query` results against `expect`. Pattern from New Computer's Dot: labelled query -> memory dataset.
+cases:
+  - {id: m01, text: "withdrawals are slow", expect: [pain-slow-withdrawal]}
+  - {id: m02, text: "KYC document upload fails", expect: [pain-kyc-friction]}
+  - {id: m03, text: "who is the biggest competitor in Aland", expect: [competitor-quickbet]}
+  - {id: m04, text: "VIP cashback rival", expect: [competitor-lunaplay]}
+  - {id: m05, text: "what is day two deposit retention", expect: [metric-d2-retention]}
+  - {id: m06, text: "first deposit metric definition", expect: [metric-ftd]}
+  - {id: m07, text: "leading e-wallet for small deposits", expect: [pm-wallet-x]}
+  - {id: m08, text: "who licenses operators and sets KYC rules", expect: [regulator-aland-gc]}
+  - {id: m09, market: borea, expect: [market-borea, competitor-lunaplay, pain-slow-withdrawal]}
+  - {id: m10, near: metric-d2-retention, hops: 1, expect: [metric-d2-retention, pain-slow-withdrawal]}
+  - {id: m11, near: market-aland, hops: 1, expect: [market-aland, competitor-quickbet, pain-kyc-friction, pm-wallet-x, regulator-aland-gc]}
+  - {id: m12, type: competitor, expect: [competitor-quickbet, competitor-lunaplay]}

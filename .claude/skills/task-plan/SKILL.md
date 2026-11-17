@@ -23,7 +23,7 @@ Plans a multi-step, multi-department task: sub-tasks, owner agent, dependencies,
 ## Steps
 
 1. Write the definition of done in one line.
-2. Split into ≤ 6 sub-tasks; each has one owner agent (from org/REGISTRY.md), input, output file, done-check.
+2. Split into ≤ 6 sub-tasks; each has one owner agent (from org/REGISTRY.md), exact input ids (files, nodes, links — no vague references), output file, a one-line done-check, and a one-line restatement by the owner before it starts.
 3. Order by dependency; run independent sub-tasks in parallel.
 4. Write work/<task>/tasks.json and work/<task>/progress.md so a restart can resume.
 5. Merge results; send to reviewer; deliver one answer.
